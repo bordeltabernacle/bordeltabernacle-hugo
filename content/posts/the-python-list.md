@@ -1,0 +1,114 @@
++++
+categories = ["misc"]
+date = "2016-08-12T16:20:21+01:00"
+title = "the python list"
+
++++
+
+Like the numerable daily lists made with pen and paper, the list in Python is an incredibly handy way to store information, but with extra *power*.
+
+<!--more-->
+
+We can start with an empty list:
+
+{{< highlight python >}}
+>>> switches = []
+>>> type(switches)
+<type 'list'>
+{{< /highlight >}}
+
+add to it:
+
+{{< highlight python >}}
+>>> switches.append('switch-01')
+>>> switches
+['switch-01']
+>>> switches.append('switch-02')
+>>> switches
+['switch-01', 'switch-02']
+{{< /highlight >}}
+
+Create another list, and concatenate these two lists into a new list:
+
+{{< highlight python >}}
+>>> routers = ['router-03', 'router-01', 'router-02']
+>>> routers
+['router-03', 'router-01', 'router-02']
+>>> devices = switches + routers
+>>> devices
+['switch-01', 'switch-02', 'router-03', 'router-01', 'router-02']
+{{< /highlight >}}
+
+Loop through our new list:
+
+{{< highlight python >}}
+>>>count = 0
+>>>for device in devices:
+...		count += 1
+...     print 'Hostname:', device
+...
+Hostname: switch-01
+Hostname: switch-02
+Hostname: router-03
+Hostname: router-01
+Hostname: router-02
+>>>print 'There are', count, 'devices.'
+There are 5 devices.
+{{< /highlight >}}
+
+Sort the list:
+
+{{< highlight python >}}
+>>> devices
+['switch-01', 'switch-02', 'router-03', 'router-01', 'router-02']
+>>> devices.sort()
+>>> devices
+['router-01', 'router-02', 'router-03', 'switch-01', 'switch-02']
+{{< /highlight >}}
+
+Delete elements from the list:
+
+{{< highlight python >}}
+>>> devices.pop()
+'switch-02'
+>>> devices
+['router-01', 'router-02', 'router-03', 'switch-01']
+>>>
+>>> devices.remove('router-03')
+>>> devices
+['router-01', 'router-02', 'switch-01']
+{{< /highlight >}}
+
+Find the number of items in our list, and the maximum and minimum elements in the list:
+
+{{< highlight python >}}
+>>> len(devices)
+3
+>>> max(devices)
+'switch-01'
+>>> min(devices)
+'router-01'
+{{< /highlight >}}
+
+Select elements in the list through their index (not forgetting that python lists are zero-indexed!):
+
+{{< highlight python >}}
+>>> devices[0]
+'router-01'
+>>> devices[1]
+'router-02'
+{{< /highlight >}}
+
+Lists can be really useful as an interim holding bay while parsing a file, or extracting information from a directory, such as a folder of *show run* or *show version* files.
+
+This brief summary really is brief and pulls heavily from others:
+
+- [Python for Informatics][pfi]
+- [Google Python Course][gpc]
+- [Dive Into Python][dip]
+- [Brent Salisbury Python Tutorial][bspt]
+
+[pfi]:  http://www.pythonlearn.com/html-009/book009.html
+[gpc]:  https://developers.google.com/edu/python/lists
+[dip]:  http://www.diveintopython.net/native_data_types/lists.html
+[bspt]: http://networkstatic.net/python-tutorial-functions-and-passing-lists-and-dictionaries-with-simple-examples/
