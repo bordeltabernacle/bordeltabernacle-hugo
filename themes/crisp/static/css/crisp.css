@@ -131,8 +131,8 @@ input {
 /* Sidebar */
 header h1 {
 	font-size:1.9em;
-	margin-top:0.8em;
-	margin-bottom:0.6em;
+	margin-top: 0.1em;
+	margin-bottom: 35px;
 }
 header h1 a {
 	color:#444;
@@ -152,10 +152,10 @@ header #logo img {
 	font-size: 0.7em;
 	margin-top: -0.7em;
 	margin-bottom: 1.5em;
-    margin-right: 10px;
 }
 #follow-icons a {
 	color: #ccc;
+    margin-right: 10px;
 }
 #follow-icons span {
 	vertical-align:top;
