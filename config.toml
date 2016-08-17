@@ -6,3 +6,4 @@ newContentEditor = "nvim"
 [Params]
 
 disqus = "Bordeltabernacle"
+ga = "UA-67852418-3"
