@@ -2,3 +2,7 @@ baseurl = "/"
 languageCode = "en-gb"
 title = "bordeltabernacle"
 newContentEditor = "nvim"
+
+[Params]
+
+disqus = "Bordeltabernacle"
