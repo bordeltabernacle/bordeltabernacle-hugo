@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>bordeltabernacle</title>
+    <link>/</link>
+    <description>Recent content on bordeltabernacle</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-gb</language>
+    <lastBuildDate>Tue, 31 Mar 2015 00:00:00 +0000</lastBuildDate>
+    <atom:link href="/index.xml" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>The Python List</title>
+      <link>/post/2015/2015-03-31-the-python-list/</link>
+      <pubDate>Tue, 31 Mar 2015 00:00:00 +0000</pubDate>
+      
+      <guid>/post/2015/2015-03-31-the-python-list/</guid>
+      <description>&lt;p&gt;Like the numerable daily lists made with pen and paper, the list in Python is an incredibly handy way to store information, but with extra &lt;em&gt;power&lt;/em&gt;.&lt;/p&gt;
+
+&lt;p&gt;We can start with an empty list:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;&amp;gt;&amp;gt;&amp;gt; switches = []
+&amp;gt;&amp;gt;&amp;gt; type(switches)
+&amp;lt;type &#39;list&#39;&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;add to it:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;&amp;gt;&amp;gt;&amp;gt; switches.append(&#39;switch-01&#39;)
+&amp;gt;&amp;gt;&amp;gt; switches
+[&#39;switch-01&#39;]
+&amp;gt;&amp;gt;&amp;gt; switches.append(&#39;switch-02&#39;)
+&amp;gt;&amp;gt;&amp;gt; switches
+[&#39;switch-01&#39;, &#39;switch-02&#39;]
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Create another list, and concatenate these two lists into a new list:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;&amp;gt;&amp;gt;&amp;gt; routers = [&#39;router-03&#39;, &#39;router-01&#39;, &#39;router-02&#39;]
+&amp;gt;&amp;gt;&amp;gt; routers
+[&#39;router-03&#39;, &#39;router-01&#39;, &#39;router-02&#39;]
+&amp;gt;&amp;gt;&amp;gt; devices = switches + routers
+&amp;gt;&amp;gt;&amp;gt; devices
+[&#39;switch-01&#39;, &#39;switch-02&#39;, &#39;router-03&#39;, &#39;router-01&#39;, &#39;router-02&#39;]
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Loop through our new list:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;&amp;gt;&amp;gt;&amp;gt;count = 0
+&amp;gt;&amp;gt;&amp;gt;for device in devices:
+...		count += 1
+...     print &#39;Hostname:&#39;, device
+...
+Hostname: switch-01
+Hostname: switch-02
+Hostname: router-03
+Hostname: router-01
+Hostname: router-02
+&amp;gt;&amp;gt;&amp;gt;print &#39;There are&#39;, count, &#39;devices.&#39;
+There are 5 devices.
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Sort the list:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;&amp;gt;&amp;gt;&amp;gt; devices
+[&#39;switch-01&#39;, &#39;switch-02&#39;, &#39;router-03&#39;, &#39;router-01&#39;, &#39;router-02&#39;]
+&amp;gt;&amp;gt;&amp;gt; devices.sort()
+&amp;gt;&amp;gt;&amp;gt; devices
+[&#39;router-01&#39;, &#39;router-02&#39;, &#39;router-03&#39;, &#39;switch-01&#39;, &#39;switch-02&#39;]
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Delete elements from the list:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;&amp;gt;&amp;gt;&amp;gt; devices.pop()
+&#39;switch-02&#39;
+&amp;gt;&amp;gt;&amp;gt; devices
+[&#39;router-01&#39;, &#39;router-02&#39;, &#39;router-03&#39;, &#39;switch-01&#39;]
+&amp;gt;&amp;gt;&amp;gt;
+&amp;gt;&amp;gt;&amp;gt; devices.remove(&#39;router-03&#39;)
+&amp;gt;&amp;gt;&amp;gt; devices
+[&#39;router-01&#39;, &#39;router-02&#39;, &#39;switch-01&#39;]
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Find the number of items in our list, and the maximum and minimum elements in the list:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;&amp;gt;&amp;gt;&amp;gt; len(devices)
+3
+&amp;gt;&amp;gt;&amp;gt; max(devices)
+&#39;switch-01&#39;
+&amp;gt;&amp;gt;&amp;gt; min(devices)
+&#39;router-01&#39;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Select elements in the list through their index (not forgetting that python lists are zero-indexed!):&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;&amp;gt;&amp;gt;&amp;gt; devices[0]
+&#39;router-01&#39;
+&amp;gt;&amp;gt;&amp;gt; devices[1]
+&#39;router-02&#39;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Lists can be really useful as an interim holding bay while parsing a file, or extracting information from a directory, such as a folder of &lt;em&gt;show run&lt;/em&gt; or &lt;em&gt;show version&lt;/em&gt; files.&lt;/p&gt;
+
+&lt;p&gt;This brief summary really is brief and pulls heavily from others:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&#34;http://www.pythonlearn.com/html-009/book009.html&#34;&gt;Python for Informatics&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://developers.google.com/edu/python/lists&#34;&gt;Google Python Course&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;http://www.diveintopython.net/native_data_types/lists.html&#34;&gt;Dive Into Python&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;http://networkstatic.net/python-tutorial-functions-and-passing-lists-and-dictionaries-with-simple-examples/&#34;&gt;Brent Salisbury Python Tutorial&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>About</title>
+      <link>/about/</link>
+      <pubDate>Thu, 01 Jan 2015 00:00:00 +0000</pubDate>
+      
+      <guid>/about/</guid>
+      <description>&lt;p&gt;My name is Rob Phoenix. I was born just before the 1980&amp;rsquo;s. I used to be an
+&lt;a href=&#34;http://rm-phoenix.co.uk/&#34;&gt;artist&lt;/a&gt;, working in retail/hospitality/care/youth
+work/education to support myself. Then, a few years back I fell in love, moved
+to North Wales and started a family. I made a &lt;em&gt;&amp;lsquo;life decision&amp;rsquo;&lt;/em&gt;, decided not to
+be a teacher, and towards the end of 2014 I completed an MSc in Computer
+Networking and got my CCNA. This was an interesting time in networking, still
+is, and talk of Network Automation and Software-Defined was rife.  So I started
+to learn Python, because I was shit-scared I wasn&amp;rsquo;t going to get a job and
+wanted to arm myself with as many skills as possible.  Luckily, through some
+perseverance, luck and kindness from others, before completing my MSc I started
+working for a large UK VAR as an Alpha/Beta Testing Lab Engineer. Very quickly,
+because of the little Python knowledge I had, I became the &lt;em&gt;&amp;lsquo;Scripting Guy&amp;rsquo;&lt;/em&gt;,
+something that unnerved me at first, but that I quickly embraced.&lt;/p&gt;
+</description>
+    </item>
+    
+  </channel>
+</rss>

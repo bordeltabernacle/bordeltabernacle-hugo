@@ -1,5 +1,5 @@
 +++
-date = "2016-08-12T16:20:21+01:00"
+date = "2015-03-31"
 title = "The Python List"
 tags = [ "python" ]
 
