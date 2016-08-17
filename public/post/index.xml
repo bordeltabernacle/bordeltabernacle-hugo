@@ -6,15 +6,1985 @@
     <description>Recent content in Posts on bordeltabernacle</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-gb</language>
-    <lastBuildDate>Tue, 31 Mar 2015 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Fri, 25 Sep 2015 00:00:00 +0000</lastBuildDate>
     <atom:link href="/post/index.xml" rel="self" type="application/rss+xml" />
     
     <item>
-      <title>The Python List</title>
-      <link>/post/2015/2015-03-31-the-python-list/</link>
+      <title>Big Bill Broonzy: Getting Older Every Day</title>
+      <link>/post/2015/2015-09-25-big-bill-broonzy-getting-older-every-day/</link>
+      <pubDate>Fri, 25 Sep 2015 00:00:00 +0000</pubDate>
+      
+      <guid>/post/2015/2015-09-25-big-bill-broonzy-getting-older-every-day/</guid>
+      <description>&lt;iframe width=&#34;640&#34; height=&#34;360&#34; src=&#34;https://www.youtube.com/embed/hIWBbeUge5c&#34;frameborder=&#34;0&#34;&gt;&lt;/iframe&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Notes on Clojure: Keywords &amp; Symbols Confusion</title>
+      <link>/post/2015/2015-09-25-notes-on-clojure-keywords-symbols/</link>
+      <pubDate>Fri, 25 Sep 2015 00:00:00 +0000</pubDate>
+      
+      <guid>/post/2015/2015-09-25-notes-on-clojure-keywords-symbols/</guid>
+      <description>&lt;p&gt;Having not used Clojure extensively yet, or really much at all, I&amp;rsquo;m still unsure as to when to use Keywords.  So I just spent a bit of time exploring them, and subsequently touched on Symbols too.  And in writing this post confused myself further in the process.  What you have here then is not a formed explanation of either Keywords or Symbols, but observations on their behaviour. While reading this, imagine me saying &amp;lsquo;huh?&amp;rsquo; and scratching my head like Stan Laurel.&lt;/p&gt;
+
+&lt;p&gt;Keywords are described in the &lt;a href=&#34;http://clojure.org/data_structures#Data%20Structures-Keywords&#34;&gt;Clojure docs&lt;/a&gt;, within the Data Structures section, as such:&lt;/p&gt;
+
+&lt;p&gt;&lt;em&gt;&amp;ldquo;Keywords are symbolic identifiers that evaluate to themselves. They provide very fast equality tests. Like Symbols, they have names and optional namespaces, both of which are strings. The leading &amp;lsquo;:&amp;rsquo; is not part of the namespace or name.
+Keywords implement IFn for invoke() of one argument (a map) with an optional second argument (a default value). For example (:mykey my-hash-map :none) means the same as (get my-hash-map :mykey :none).&amp;rdquo;&lt;/em&gt;&lt;/p&gt;
+
+&lt;p&gt;And within the lein repl:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-clojure&#34;&gt;user=&amp;gt; (doc keyword)
+-------------------------
+clojure.core/keyword
+([name] [ns name])
+  Returns a Keyword with the given namespace and name.  Do not use :
+  in the keyword strings, it will be added automatically.
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Interestingly, on &lt;a href=&#34;https://en.wikipedia.org/wiki/Identifier&#34;&gt;Wikipedia&lt;/a&gt; identifiers are described as &lt;em&gt;&amp;ldquo;a name that identifies either a unique object or a unique class of objects&amp;rdquo;&lt;/em&gt;, which immediately makes me think of Python variables or similar.  But that&amp;rsquo;s not what these are, they don&amp;rsquo;t hold another value, they evaluate to themselves, which kinda confuses me.  Anyway, let&amp;rsquo;s get back in the lein repl and see what they&amp;rsquo;re all about.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-clojure&#34;&gt;; create a keyword from a string using the keyword method
+user=&amp;gt; (keyword &amp;quot;blues&amp;quot;)
+:blues
+; check what type it is
+user=&amp;gt; (type :blues)
+clojure.lang.Keyword
+; so far I&#39;ve mostly seen keywords used as the key in
+; maps, Clojure&#39;s key/value data structure
+user=&amp;gt; {:a 1 :b 2 :c 3}
+{:a 1, :b 2, :c 3}
+user=&amp;gt; (type {:a 1 :b 2 :c 3})
+clojure.lang.PersistentArrayMap
+; and as the docs say we can use the keyword to get the relevant
+; value from the map
+user=&amp;gt; (:b {:a 1 :b 2 :c 3})
+2
+user=&amp;gt; (:b {:a 1 :b {:a 1 :b 2 :c 3}})
+{:a 1, :b 2, :c 3}
+user=&amp;gt; (:b (:b {:a 1 :b {:a 1 :b 2 :c 3}}))
+2
+; we can also use keywords as the values in a map
+user=&amp;gt; {:a :1 :b :2}
+{:a :1, :b :2}
+user=&amp;gt; (:a {:a :1 :b :2})
+:1
+; we can use strings in place of keywords in a map
+user=&amp;gt; {&amp;quot;a&amp;quot; 1 &amp;quot;b&amp;quot; 2}
+{&amp;quot;a&amp;quot; 1, &amp;quot;b&amp;quot; 2}
+user=&amp;gt; (type {&amp;quot;a&amp;quot; 1 &amp;quot;b&amp;quot; 2})
+clojure.lang.PersistentArrayMap
+user=&amp;gt; (&amp;quot;a&amp;quot; {&amp;quot;a&amp;quot; 1 &amp;quot;b&amp;quot; 2})
+ClassCastException java.lang.String cannot be cast to clojure.lang.IFn  user/eval16637 (form-init7909990402899556571.clj:1)
+
+user=&amp;gt; (get {&amp;quot;a&amp;quot; 1 &amp;quot;b&amp;quot; 2} &amp;quot;a&amp;quot;)
+1
+; though we have to use get here, and it&#39;s a bit uglier.
+; I also get the impression it&#39;s just common expectation to use keywords
+; for map keys, and that frowning will occur if we use strings.
+;
+; we can also define keywords with the colon
+user=&amp;gt; :blues
+:blues
+; and using a double colon also defines the namespace
+user=&amp;gt; ::blues
+:user/blues
+user=&amp;gt; (type ::blues)
+clojure.lang.Keyword
+; which is similar to this
+user=&amp;gt; (keyword &amp;quot;blues&amp;quot; &amp;quot;Mississippi-Fred-McDowell&amp;quot;)
+:blues/Mississippi-Fred-McDowell
+user=&amp;gt; (type :blues/Mississippi-Fred-McDowell)
+clojure.lang.Keyword
+; though I don&#39;t think you can define the name of the namespace using
+; the double colon method, and to be honest I don&#39;t yet know why you would
+; do this I thought maybe it would have something to do with referencing a value
+; in a different namespace, but I really don&#39;t understand this yet, I need
+; to actually start building stuff in Clojure. Understanding is a constant
+; cycle of learning and building and learning and building.
+;
+; I tried this....
+user=&amp;gt; {:a 1 :b 2 :c 3}
+{:a 1, :b 2, :c 3}
+user=&amp;gt; (ns notuser)
+nil
+notuser=&amp;gt; :a
+:a
+notuser=&amp;gt; user/:a
+
+CompilerException java.lang.RuntimeException: No such var: user/:a, compiling:(/tmp/form-init7909990402899556571.clj:1:6084)
+notuser=&amp;gt; user/:b
+
+CompilerException java.lang.RuntimeException: No such var: user/:b, compiling:(/tmp/form-init7909990402899556571.clj:1:6084)
+notuser=&amp;gt; (ns user)
+nil
+user=&amp;gt; {::a 1 ::b 2 ::c 3}
+{:user/a 1, :user/b 2, :user/c 3}
+user=&amp;gt; (ns notuser)
+nil
+notuser=&amp;gt; :a
+:a
+notuser=&amp;gt; user/:a
+CompilerException java.lang.RuntimeException: No such var: user/:a, compiling:(/tmp/form-init7909990402899556571.clj:1:6084)
+
+notuser=&amp;gt; :user/a
+:user/a
+; but of course I then realised that this is just daft, because....
+notuser=&amp;gt; (ns user)
+nil
+user=&amp;gt; :a
+:a
+; so many moments of stupidity along the path to enlightenment!
+; Anyway just to reiterate, I don&#39;t quite get the why of all this yet
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Symbols appear to be easily confused with Keywords in Clojure.&lt;/p&gt;
+
+&lt;p&gt;&lt;em&gt;&amp;ldquo;Symbols are identifiers that are normally used to refer to something else. They can be used in program forms to refer to function parameters, let bindings, class names and global vars. They have names and optional namespaces, both of which are strings. Symbols can have metadata (see with-meta).
+Symbols, just like Keywords, implement IFn for invoke() of one argument (a map) with an optional second argument (a default value). For example (&amp;lsquo;mysym my-hash-map :none) means the same as (get my-hash-map &amp;lsquo;mysym :none).&amp;rdquo;&lt;/em&gt;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-clojure&#34;&gt;user=&amp;gt; (doc symbol)
+-------------------------
+clojure.core/symbol
+([name] [ns name])
+Returns a Symbol with the given namespace and name.
+
+user=&amp;gt; (symbol foo)
+
+CompilerException java.lang.RuntimeException: Unable to resolve symbol: foo in this context, compiling:(/tmp/form-init7909990402899556571.clj:1:1)
+user=&amp;gt; (symbol &#39;foo)
+foo
+user=&amp;gt; (type (symbol &#39;foo))
+clojure.lang.Symbol
+user=&amp;gt; (symbol &amp;quot;foo&amp;quot;)
+foo
+; keywords cannot be converted to symbols
+user=&amp;gt; (symbol :foo)
+
+ClassCastException clojure.lang.Keyword cannot be cast to java.lang.String  clojure.core/symbol (core.clj:552)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;We can do some similar things with Symbols as we can with Keywords.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-clojure&#34;&gt;user=&amp;gt; {&#39;a 1 &#39;b 2 &#39;c 3}
+{a 1, b 2, c 3}
+user=&amp;gt; (type {&#39;a 1 &#39;b 2 &#39;c 3})
+clojure.lang.PersistentArrayMap
+user=&amp;gt; (type &#39;a)
+clojure.lang.Symbol
+user=&amp;gt; (&#39;a {&#39;a 1 &#39;b 2})
+1
+; but we can assign other values to Symbols, where we can&#39;t with Keywords.
+; This comes back to the description of Keywords as
+; &amp;quot;symbolic identifiers that evaluate to themselves&amp;quot;
+user=&amp;gt; (eval :blues)
+:blues
+; evaluates to itself
+user=&amp;gt; (eval blues)
+CompilerException java.lang.RuntimeException: Unable to resolve symbol: blues in this context, compiling:(/tmp/form-init7909990402899556571.clj:1:1)
+
+; we have to assign something to blues
+user=&amp;gt; (def blues &amp;quot;Muddy Waters&amp;quot;)
+#&#39;user/blues
+user=&amp;gt; (eval blues)
+&amp;quot;Muddy Waters&amp;quot;
+user=&amp;gt; blues
+&amp;quot;Muddy Waters&amp;quot;
+user=&amp;gt; (type blues)
+java.lang.String
+; yet we are unable to assign anything else to a keyword
+user=&amp;gt; (def :blues &amp;quot;Muddy Waters&amp;quot;)
+
+CompilerException java.lang.RuntimeException: First argument to def must be a Symbol, compiling:(/tmp/form-init7909990402899556571.clj:1:1)
+; Now I thought we could assign a value to a symbol, buuuuut...
+user=&amp;gt; (def &#39;blues &amp;quot;Muddy Waters&amp;quot;)
+CompilerException java.lang.RuntimeException: First argument to def must be a Symbol, compiling:(/tmp/form-init7909990402899556571.clj:1:1)
+user=&amp;gt; (defn &#39;blues [a] (str a &amp;quot; got the blues&amp;quot;))
+
+IllegalArgumentException First argument to defn must be a symbol  clojure.core/defn--4156 (core.clj:281)
+user=&amp;gt; (defn blues [a] (str a &amp;quot; got the blues&amp;quot;))
+#&#39;user/blues
+user=&amp;gt; (blues &amp;quot;Muddy Waters&amp;quot;)
+&amp;quot;Muddy Waters got the blues&amp;quot;
+user=&amp;gt; &#39;blues
+blues
+; So when assigning a value to a Symbol you don&#39;t use the quote.
+user=&amp;gt; (symbol? &#39;blues)
+true
+user=&amp;gt; (symbol? (quote blues))
+true
+user=&amp;gt; (def blues &amp;quot;Muddy Waters&amp;quot;)
+#&#39;user/blues
+user=&amp;gt; (symbol? blues)
+false
+user=&amp;gt; (symbol? &#39;blues)
+true
+; Here blues is false as it refers to the string &amp;quot;Muddy Waters&amp;quot;, whereas
+; &#39;blues is the symbol
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Keywords and Symbols are not the same thing.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-clojure&#34;&gt;user=&amp;gt; (keyword? &#39;blues)
+false
+user=&amp;gt; (keyword? :blues)
+true
+user=&amp;gt; (symbol? :blues)
+false
+user=&amp;gt; (symbol? &#39;blues)
+true
+user=&amp;gt; (:a {&#39;a 1 &#39;b 2})
+nil
+; as keywords refer to themselves they are identical, whereas symbols are not
+user=&amp;gt; (identical? :a :a)
+true
+user=&amp;gt; (identical? &#39;a &#39;a)
+false
+; even though
+user=&amp;gt; (= :a :a)
+true
+user=&amp;gt; (= &#39;a &#39;a)
+true
+; which, like above, has to do with the difference between the thing itself
+; and what the thing is referencing.
+; Here is an example of this difference
+user=&amp;gt; (def blues [&amp;quot;Blind Willie Johnson&amp;quot; &amp;quot;Muddy Waters&amp;quot; &amp;quot;Sister Gertrude Morgan&amp;quot;])
+#&#39;user/blues
+user=&amp;gt; blues
+[&amp;quot;Blind Willie Johnson&amp;quot; &amp;quot;Muddy Waters&amp;quot; &amp;quot;Sister Gertrude Morgan&amp;quot;]
+user=&amp;gt; (type blues)
+clojure.lang.PersistentVector
+user=&amp;gt; &#39;blues
+blues
+user=&amp;gt; (type &#39;blues)
+clojure.lang.Symbol
+; yet the Symbol refers to the underlying list, not to itself, so if we
+; reference the symbol we will always get back what it refers to
+user=&amp;gt; (eval &#39;blues)
+[&amp;quot;Blind Willie Johnson&amp;quot; &amp;quot;Muddy Waters&amp;quot; &amp;quot;Sister Gertrude Morgan&amp;quot;]
+user=&amp;gt; (eval blues)
+[&amp;quot;Blind Willie Johnson&amp;quot; &amp;quot;Muddy Waters&amp;quot; &amp;quot;Sister Gertrude Morgan&amp;quot;]
+user=&amp;gt; (first &#39;[&amp;quot;Blind Willie Johnson&amp;quot; &amp;quot;Muddy Waters&amp;quot; &amp;quot;Sister Gertrude Morgan&amp;quot;])
+&amp;quot;Blind Willie Johnson&amp;quot;
+user=&amp;gt; (first blues)
+&amp;quot;Blind Willie Johnson&amp;quot;
+user=&amp;gt; (type &#39;[&amp;quot;Blind Willie Johnson&amp;quot; &amp;quot;Muddy Waters&amp;quot; &amp;quot;Sister Gertrude Morgan&amp;quot;])
+clojure.lang.PersistentVector
+user=&amp;gt; (type blues)
+clojure.lang.PersistentVector
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Keywords and Symbols can also be used within Vectors&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-clojure&#34;&gt;user=&amp;gt; [1 2 3]
+[1 2 3]
+user=&amp;gt; (type [1 2 3])
+clojure.lang.PersistentVector
+user=&amp;gt; [1 &amp;quot;one&amp;quot; &amp;quot;two&amp;quot; 3]
+[1 &amp;quot;one&amp;quot; &amp;quot;two&amp;quot; 3]
+user=&amp;gt; [1 :one :two 3]
+[1 :one :two 3]
+user=&amp;gt; [1 :one :two &#39;three 3]
+[1 :one :two three 3]
+user=&amp;gt; (first (rest [1 :one :two &#39;three 3]))
+:one
+user=&amp;gt; [&#39;one 1 :one :two &#39;three 3]
+[one 1 :one :two three 3]
+user=&amp;gt; (first [&#39;one 1 :one :two &#39;three 3])
+one
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;I also discovered that &lt;code&gt;&#39;&lt;/code&gt; &amp;amp; &lt;code&gt;&amp;quot;&lt;/code&gt; are not interchangeable as they are in other languages, due to the use of &lt;code&gt;&#39;&lt;/code&gt; to define Symbols and Lists.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-clojure&#34;&gt;user=&amp;gt; &amp;quot;blues&amp;quot;
+&amp;quot;blues&amp;quot;
+user=&amp;gt; (type &amp;quot;blues&amp;quot;)
+java.lang.String
+user=&amp;gt; &#39;blues&#39;
+blues&#39;
+user=&amp;gt; (type &#39;blues&#39;)
+clojure.lang.Symbol
+user=&amp;gt; (str &#39;blues&#39;)
+&amp;quot;blues&#39;&amp;quot;
+user=&amp;gt; (str &amp;quot;blues&amp;quot;)
+&amp;quot;blues&amp;quot;
+user=&amp;gt; &amp;quot;:blues&amp;quot;
+&amp;quot;:blues&amp;quot;
+user=&amp;gt; (type &amp;quot;:blues&amp;quot;)
+java.lang.String
+user=&amp;gt; (type &#39;:blues&#39;)
+clojure.lang.Keyword
+user=&amp;gt; &#39;:blues&#39;
+:blues&#39;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The confusion is all mine, any insight is borrowed heavily from the following articles.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&#34;https://stackoverflow.com/questions/1527548/why-does-clojure-have-keywords-in-addition-to-symbols?rq=1&#34;&gt;Why does Clojure have “keywords” in addition to “symbols”?&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;http://clojuredocs.org/clojure.core/symbol&#34;&gt;ClojureDocs - Symbol&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;http://clojuredocs.org/clojure.core/keyword&#34;&gt;ClojureDocs - Keyword&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;http://www.braveclojure.com/do-things/#2_10__Quoting&#34;&gt;Clojure For The Brave and True - Quoting&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;http://www.braveclojure.com/do-things/#2_5__Keywords&#34;&gt;Clojure For The Brave and True - Keywords&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;http://www.braveclojure.com/do-things/#2_9__Symbols_and_Naming&#34;&gt;Clojure For The Brave and True - Symbols &amp;amp; Naming&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://stackoverflow.com/questions/2320348/symbols-in-clojure&#34;&gt;Symbols in Clojure&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Lonnie Johnson: Away Down In The Alley Blues</title>
+      <link>/post/2015/2015-09-16-lonnie-johnson-away-down-in-the-alley-blues/</link>
+      <pubDate>Wed, 16 Sep 2015 00:00:00 +0000</pubDate>
+      
+      <guid>/post/2015/2015-09-16-lonnie-johnson-away-down-in-the-alley-blues/</guid>
+      <description>&lt;iframe width=&#34;640&#34; height=&#34;360&#34; src=&#34;https://www.youtube.com/embed/n4Ket08gies&#34;frameborder=&#34;0&#34;&gt;&lt;/iframe&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Notes on Django: Population Script</title>
+      <link>/post/2015/2015-09-16-notes-on-django-population-script/</link>
+      <pubDate>Wed, 16 Sep 2015 00:00:00 +0000</pubDate>
+      
+      <guid>/post/2015/2015-09-16-notes-on-django-population-script/</guid>
+      <description>&lt;p&gt;After my last Django post I happened across &lt;a href=&#34;http://www.tangowithdjango.com/book/chapters/models.html#creating-a-population-script&#34;&gt;this population script&lt;/a&gt; from &lt;a href=&#34;http://www.tangowithdjango.com/&#34;&gt;Tango with Django&lt;/a&gt;.  So I&amp;rsquo;ve updated it and adapted it to my own needs.  Ha, Screw You &lt;a href=&#34;http://www.discoposse.com/index.php/2014/11/09/pay-yourself-first-the-art-of-reducing-technical-debt/&#34;&gt;Technical Debt!&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;example models.py&lt;/code&gt;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;class Genre(models.Model):
+    name = models.CharField()
+
+
+class Musician(models.Model):
+    genre = models.ManyToManyField(Genre)  # Note the m2m field
+    name = models.CharField()
+    bio = models.TextField()
+    alive = models.BooleanField()
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;code&gt;example populate.py&lt;/code&gt;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;import os
+
+
+def populate():
+
+    print &#39;Populating Database...&#39;
+    print &#39;----------------------\n&#39;
+
+    username = &#39;uname&#39;
+    email = &#39;uname@domain.com&#39;
+    password = &#39;secret&#39;
+
+    blues = add_genre(&#39;Blues&#39;)
+    jazz = add_genre(&#39;Jazz&#39;)
+
+    add_musician(&#39;Billie Holiday&#39;,
+                &#39;Eleanora Fagan, professionally known as Billie Holiday, was \
+                an American jazz musician and singer-songwriter. Nicknamed \
+                &amp;quot;Lady Day&amp;quot; by her friend and music partner Lester Young, \
+                Holiday had a seminal influence on jazz music and pop singing. \
+                Her vocal style, strongly inspired by jazz instrumentalists, \
+                pioneered a new way of manipulating phrasing and tempo.&#39;,
+                False,
+                blues, jazz)
+
+    add_musician(&#39;Big Mama Thornton&#39;,
+                &amp;quot;Willie Mae &#39;Big Mama&#39; Thornton was an American rhythm and \
+                blues singer and songwriter. She was the first to record \
+                Leiber and Stoller&#39;s &#39;Hound Dog&#39; in 1952, which became her \
+                biggest hit. It spent seven weeks at number one on the \
+                Billboard R&amp;amp;B charts in 1953 and sold almost two million \
+                copies. However, her success was overshadowed three years \
+                later, when Elvis Presley recorded his more popular rendition \
+                of &#39;Hound Dog&#39;. Similarly, Thornton&#39;s &#39;Ball &#39;n&#39; Chain&#39; had a \
+                bigger impact when performed and recorded by Janis Joplin in \
+                the late 1960s.&amp;quot;,
+                False,
+                blues)
+
+    add_musician(&#39;Ella Fitzgerald&#39;,
+                &#39;Ella Jane Fitzgerald was an American jazz singer often \
+                referred to as the First Lady of Song, Queen of Jazz and \
+                Lady Ella. She was noted for her purity of tone, impeccable \
+                diction, phrasing and intonation, and a &amp;quot;horn-like&amp;quot; \
+                improvisational ability, particularly in her scat singing.&#39;,
+                False,
+                jazz)
+
+
+    create_super_user(username, email, password)
+
+    print &#39;\nCurrently Populated:&#39;
+    print &#39;--------------------\n&#39;
+
+    for m in Musician.objects.all():
+        for g in Genre.objects.filter(musician__name__startswith=m):
+            print &#39;- {0}: {1}&#39;.format(str(m), str(g))
+
+    print &#39;\nSuperUser:&#39;, User.objects.get(is_superuser=True).username
+    print &#39;\n&#39; + (&#39;=&#39; * 80) + &#39;\n&#39;
+
+
+def add_genre(name):
+    g, created = Genre.objects.get_or_create(name=name)
+    &#39;&#39;&#39;
+    get_or_create returns a tuple of (object, created), where
+    the object is the db entry and created is a Boolean referring
+    to whether the object was just created or not.  So, if nothing&#39;s
+    gone wrong False will indicate the object already exists
+    &#39;&#39;&#39;
+    print &#39;- Genre: {0}, Created: {1}&#39;.format(str(g), str(created))
+    return g
+
+
+def add_musician(name, bio, alive, *genre):
+    m, created = Musician.objects.get_or_create(name=name,
+                                                bio=bio,
+                                                alive=alive)
+    m.genre.add(*genre)
+    print &#39;- Musician: {0}, Created: {1}&#39;.format(str(m), str(created))
+    return m
+
+
+def create_super_user(username, email, password):
+    &#39;&#39;&#39;
+    for some reason get_or_create didn&#39;t work with creating the
+    SuperUser so here is a try/except, with an IntegrityError
+    raised if the SuperUser already exists
+    &#39;&#39;&#39;
+    try:
+        u = User.objects.create_superuser(username, email, password)
+        return u
+    except IntegrityError:
+        pass
+
+if __name__ == &#39;__main__&#39;:
+    print &#39;\n&#39; + (&#39;=&#39; * 80) + &#39;\n&#39;
+    import django
+    os.environ.setdefault(&#39;DJANGO_SETTINGS_MODULE&#39;,
+                          &#39;Project.settings&#39;)
+    django.setup()
+    from app.models import Genre, Musician
+    from django.contrib.auth.models import User
+    from django.db import IntegrityError
+    populate()  # Call the populate function, which calls the
+                # add_genre and add_musician functions
+
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;And in our root project directory, where &lt;code&gt;manage.py&lt;/code&gt; is, we run our script.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;vagrant@django:~/shared/ProjectRootDirectory$ python populate.py
+================================================================================
+
+Populating Database...
+----------------------
+
+- Genre: Blues, Created: True
+- Genre: Jazz, Created: True
+- Musician: Billie Holiday, Created: True
+- Musician: Big Mama Thornton, Created: True
+- Musician: Ella Fitzgerald, Created: True
+
+Currently Populated:
+--------------------
+
+- Billie Holiday: Jazz
+- Billie Holiday: Blues
+- Big Mama Thornton: Blues
+- Ella Fitzgerald: Jazz
+
+SuperUser: uname
+
+================================================================================
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;So, buggering about with models and the database just got easier, now that it takes minutes to destroy it and rebuild it. Super.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Notes on Clojure: Dipping My Toes In</title>
+      <link>/post/2015/2015-09-04-clojure-dipping-toes/</link>
+      <pubDate>Fri, 04 Sep 2015 00:00:00 +0000</pubDate>
+      
+      <guid>/post/2015/2015-09-04-clojure-dipping-toes/</guid>
+      <description>&lt;p&gt;Maybe because I&amp;rsquo;m such a late arrival to this programming pastime, I feel a certain inadequacy, a need to over compensate.  Or maybe I just find it exciting learning new things, and I just want to get deeper and consume everything.  Anyway, I&amp;rsquo;ve been getting more interested in functional programming, I don&amp;rsquo;t know why.  I&amp;rsquo;m not so embedded in object-oriented, and I&amp;rsquo;ve been trying to understand JavaScript&amp;rsquo;s prototype-based programming, and if I&amp;rsquo;m honest, these concepts aren&amp;rsquo;t yet meaningful enough to me to matter so much outside of syntax and the practicalities of how to write code, yet functional programming seems to make a certain amount of sense. Perhaps this will become an endeavour in proving myself wrong. So, I listened to &lt;a href=&#34;https://twitter.com/gigasquid&#34;&gt;Carin Meier&lt;/a&gt; on &lt;a href=&#34;https://changelog.com/171/&#34;&gt;The Changelog&lt;/a&gt; and bought &lt;a href=&#34;http://www.amazon.co.uk/Living-Clojure-Carin-Meier/dp/1491909048/ref=sr_1_1?ie=UTF8&amp;amp;qid=1441319254&amp;amp;sr=8-1&amp;amp;keywords=living+clojure&#34;&gt;her book&lt;/a&gt;, and am going to start learning Clojure.&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://leiningen.org/&#34;&gt;Leiningen&lt;/a&gt; is the tool Carin recommends for getting started with Clojure, so let&amp;rsquo;s install that.
+Check Java is installed first:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ java -version
+java version &amp;quot;1.7.0_80&amp;quot;
+Java(TM) SE Runtime Environment (build 1.7.0_80-b15)
+Java HotSpot(TM) 64-Bit Server VM (build 24.80-b11, mixed mode)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Initially I used my package manager to install Leiningen, but this installed an old version.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ sudo apt-get update
+$ sudo apt-get leiningen
+$ lein -v
+Leiningen 1.7.1 on Java 1.7.0_80 Java HotSpot(TM) 64-Bit Server VM
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;So, I uninstalled that, and followed the instructions on the Leiningen site.  Copy and Paste the contents of the &lt;a href=&#34;https://github.com/technomancy/leiningen/blob/stable/bin/lein&#34;&gt;lein&lt;/a&gt; file, into a file called &lt;code&gt;lein&lt;/code&gt;.  Move the file into my &lt;code&gt;$PATH&lt;/code&gt;, and make it executable.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ sudo apt-get remove leiningen # remove apt-get installed lein
+$ vim ~/lein # copy and paste the contents of the lein file
+$ echo $PATH # check path
+/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games
+:/usr/lib/jvm/java-7-oracle/bin:/usr/lib/jvm/java-7-oracle/db/bin:/usr/lib/jvm/java-7-or
+acle/jre/bin:/usr/lib/jvm/java-7-oracle/bin:/usr/lib/jvm/java-7-oracle/db/bin:/usr/lib/j
+vm/java-7-oracle/jre/bin
+$ mv ~/lein /usr/bin/lein # move the lein file into my $PATH
+$ chmod a+x /usr/bin/lein # make it executable
+$ lein # aaaaaand run it!
+ Downloading Leiningen to /home/willem/.lein/self-installs/leiningen-2.5.2-standalone.jar now...                                                                       [1050/1997]
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100   406    0   406    0     0    653      0 --:--:-- --:--:-- --:--:--   652
+100 15.0M  100 15.0M    0     0  4160k      0  0:00:03  0:00:03 --:--:-- 6334k
+Leiningen is a tool for working with Clojure projects.
+
+Several tasks are available:
+change              Rewrite project.clj by applying a function.
+check               Check syntax and warn on reflection.
+classpath           Print the classpath of the current project.
+clean               Remove all files from project&#39;s target-path.
+compile             Compile Clojure source into .class files.
+deploy              Build and deploy jar to remote repository.
+deps                Download all dependencies.
+do                  Higher-order task to perform other tasks in succession.
+help                Display a list of tasks or help for a given task.
+install             Install the current project to the local repository.
+jar                 Package up all the project&#39;s files into a jar file.
+javac               Compile Java source files.
+new                 Generate project scaffolding based on a template.
+plugin              DEPRECATED. Please use the :user profile instead.
+pom                 Write a pom.xml file to disk for Maven interoperability.
+release             Perform :release-tasks.
+repl                Start a repl session either with the current project or standalone.
+retest              Run only the test namespaces which failed last time around.
+run                 Run a -main function with optional command-line arguments.
+search              Search remote maven repositories for matching jars.
+show-profiles       List all available profiles or display one if given an argument.
+test                Run the project&#39;s tests.
+trampoline          Run a task without nesting the project&#39;s JVM inside Leiningen&#39;s.
+uberjar             Package up the project files and dependencies into a jar file.
+update-in           Perform arbitrary transformations on your project map.
+upgrade             Upgrade Leiningen to specified version or latest stable.
+vcs                 Interact with the version control system.
+version             Print version for Leiningen and the current JVM.
+with-profile        Apply the given task with the profile(s) specified.
+
+Run `lein help $TASK` for details.
+
+Global Options:
+  -o             Run a task offline.
+  -U             Run a task after forcing update of snapshots.
+  -h, --help     Print this help or help for a specific task.
+  -v, --version  Print Leiningen&#39;s version.
+
+See also: readme, faq, tutorial, news, sample, profiles, deploying, gpg,
+mixed-source, templates, and copying.
+
+$
+$ lein -v # check the version again, 2.5.2 &amp;gt; 1.7.1, super.
+Leiningen 2.5.2 on Java 1.7.0_80 Java HotSpot(TM) 64-Bit Server VM
+$
+$ lein repl # Fire up the REPL, first time this did some more stuff, see below
+            # but subsequent times it didn&#39;t, no worries.
+Retrieving org/clojure/tools.nrepl/0.2.10/tools.nrepl-0.2.10.pom from central
+Retrieving org/clojure/pom.contrib/0.1.2/pom.contrib-0.1.2.pom from central
+Retrieving org/sonatype/oss/oss-parent/7/oss-parent-7.pom from central
+Retrieving clojure-complete/clojure-complete/0.2.3/clojure-complete-0.2.3.pom from clojars
+Retrieving org/clojure/clojure/1.7.0/clojure-1.7.0.pom from central
+Retrieving org/clojure/clojure/1.7.0/clojure-1.7.0.jar from central
+Retrieving org/clojure/tools.nrepl/0.2.10/tools.nrepl-0.2.10.jar from central
+Retrieving clojure-complete/clojure-complete/0.2.3/clojure-complete-0.2.3.jar from clojars
+nREPL server started on port 33732 on host 127.0.0.1 - nrepl://127.0.0.1:33732
+REPL-y 0.3.7, nREPL 0.2.10
+Clojure 1.7.0
+Java HotSpot(TM) 64-Bit Server VM 1.7.0_80-b15
+   Docs: (doc function-name-here)
+         (find-doc &amp;quot;part-of-name-here&amp;quot;)
+ Source: (source function-name-here)
+Javadoc: (javadoc java-object-or-class-here)
+   Exit: Control+D or (exit) or (quit)
+Results: Stored in vars *1, *2, *3, an exception in *e
+
+user=&amp;gt;
+user=&amp;gt; quit
+Bye for now!
+$
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;So the following is basically just me following along with Carin&amp;rsquo;s book, where she starts to introduce Clojure.  So all credit goes to her, I&amp;rsquo;m just a messenger.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ lein new wonderland # start a new Clojure project
+Generating a project called wonderland based on the &#39;default&#39; template.
+The default template is intended for library projects, not applications.
+To see other templates (app, plugin, etc), try `lein help new`.
+$ cd wonderland/ # change into it
+/wonderland$ lein repl # and get the REPL going again
+nREPL server started on port 50609 on host 127.0.0.1 - nrepl://127.0.0.1:50609
+REPL-y 0.3.7, nREPL 0.2.10
+Clojure 1.7.0
+Java HotSpot(TM) 64-Bit Server VM 1.7.0_80-b15
+    Docs: (doc function-name-here)
+          (find-doc &amp;quot;part-of-name-here&amp;quot;)
+  Source: (source function-name-here)
+ Javadoc: (javadoc java-object-or-class-here)
+    Exit: Control+D or (exit) or (quit)
+ Results: Stored in vars *1, *2, *3, an exception in *e
+
+user=&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;g
+; Some basic number stuff. Clojure is littered with parenthesis, you get used to
+; it.  Clojure structures things differently to what I&amp;rsquo;m used to.  The operator
+; goes first, then the parameters it takes.  I really quite like this, it&amp;rsquo;s a
+; nice way of organising things, though I can see it might annoy some people.
+user=&amp;gt; (+ 1 1)
+2
+user=&amp;gt; 42
+42
+user=&amp;gt; &lt;sup&gt;6&lt;/sup&gt;&amp;frasl;&lt;sub&gt;3&lt;/sub&gt;  ; Clojure will reduce a ratio if it can.
+            ; This is different to division
+2
+user=&amp;gt; &lt;sup&gt;8&lt;/sup&gt;&amp;frasl;&lt;sub&gt;3&lt;/sub&gt;  ; And won&amp;rsquo;t if it can&amp;rsquo;t, but will leave it as a ratio, rather than
+            ; change it to a decimal
+&lt;sup&gt;8&lt;/sup&gt;&amp;frasl;&lt;sub&gt;3&lt;/sub&gt;
+user=&amp;gt; 6.0/3 ; you can&amp;rsquo;t use decimals in a ratio.
+NumberFormatException Invalid number: 6.0/3  clojure.lang.LispReader.readNumber (LispReader.java:330)&lt;/p&gt;
+
+&lt;p&gt;user=&amp;gt; &lt;sup&gt;6&lt;/sup&gt;&amp;frasl;&lt;sub&gt;3&lt;/sub&gt;.0
+NumberFormatException Invalid number: &lt;sup&gt;6&lt;/sup&gt;&amp;frasl;&lt;sub&gt;3&lt;/sub&gt;.0  clojure.lang.LispReader.readNumber (LispReader.java:330)&lt;/p&gt;
+
+&lt;p&gt;user=&amp;gt; 6.0/3.0&lt;/p&gt;
+
+&lt;p&gt;NumberFormatException Invalid number: 6.0/3.0  clojure.lang.LispReader.readNumber (LispReader.java:330)
+user=&amp;gt; (/ 6 3)
+2
+user=&amp;gt; (/ 3 6) ; Dividing whole numbers will result in a ratio
+&lt;sup&gt;1&lt;/sup&gt;&amp;frasl;&lt;sub&gt;2&lt;/sub&gt;
+user=&amp;gt; (/ 3.0 6.0) ; To get a decimal result, use a decimal in the equation
+0.5
+user=&amp;gt; (/ 3.0 6)
+0.5
+user=&amp;gt; &amp;ldquo;blues&amp;rdquo; ; yep, that&amp;rsquo;s a string
+&amp;ldquo;blues&amp;rdquo;
+user=&amp;gt; blues
+CompilerException java.lang.RuntimeException: Unable to resolve symbol: blues in this context, compiling:(/tmp/form-init7599042722842248080.clj:1:1010)&lt;/p&gt;
+
+&lt;p&gt;user=&amp;gt; true ; Ain&amp;rsquo;t nothing going on but a boolean, yo.
+true
+user=&amp;gt; nil ; nil is the absence of a value, like None in Python
+nil
+user=&amp;gt; (+ 5 (- 4 2)) ; Here&amp;rsquo;s the beginning of the growth of the parens
+7
+user=&amp;gt; &amp;lsquo;(5 &amp;ldquo;blues&amp;rdquo; :music) ; A list is denoted with a &amp;lsquo;
+(5 &amp;ldquo;blues&amp;rdquo; :music)
+user=&amp;gt; (first &amp;lsquo;(5, &amp;ldquo;blues&amp;rdquo;, :music)) ; first gives us the first list item
+5
+user=&amp;gt; (rest &amp;lsquo;(5, &amp;ldquo;blues&amp;rdquo;, :music)) ; and rest, the rest
+(&amp;ldquo;blues&amp;rdquo; :music)
+user=&amp;gt; (first (rest &amp;lsquo;(5, &amp;ldquo;blues&amp;rdquo;, :music))) ; we can nest these fuctions
+&amp;ldquo;blues&amp;rdquo;
+user=&amp;gt; (cons &amp;ldquo;down&amp;rdquo; &amp;lsquo;(5, &amp;ldquo;blues&amp;rdquo;, :music)) ; and use cons to add to our list
+(&amp;ldquo;down&amp;rdquo; 5 &amp;ldquo;blues&amp;rdquo; :music)
+user=&amp;gt; (cons &amp;ldquo;down&amp;rdquo; (cons 7 &amp;lsquo;(5, &amp;ldquo;blues&amp;rdquo;, :music))) ; and nest our cons
+(&amp;ldquo;down&amp;rdquo; 7 5 &amp;ldquo;blues&amp;rdquo; :music)
+```&lt;/p&gt;
+
+&lt;p&gt;That&amp;rsquo;s as far as I got last night. I know it&amp;rsquo;s not far, but having kids makes me tired.  And I just want to reiterate again, this is basically just regurgitating Carin&amp;rsquo;s work, go &lt;a href=&#34;http://www.amazon.co.uk/Living-Clojure-Carin-Meier/dp/1491909048/ref=sr_1_1?ie=UTF8&amp;amp;qid=1441319254&amp;amp;sr=8-1&amp;amp;keywords=living+clojure&#34;&gt;buy her book&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;Interestingly, the name &lt;em&gt;Leiningen&lt;/em&gt; comes from the short story &lt;a href=&#34;http://www.classicshorts.com/stories/lvta.html&#34;&gt;Leiningen versus the Ants&lt;/a&gt;.  A tale of plantation owner Leiningen&amp;rsquo;s battle against an invading army of flesh-eating ants.  It&amp;rsquo;s a really good read, triumph over adversity, the importance of intelligence and resourcefulness, I highly recommend you &lt;a href=&#34;http://www.classicshorts.com/stories/lvta.html&#34;&gt;read&lt;/a&gt; it.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Notes on Django: Setting Up</title>
+      <link>/post/2015/2015-09-03-notes-on-django-setting-up/</link>
+      <pubDate>Thu, 03 Sep 2015 00:00:00 +0000</pubDate>
+      
+      <guid>/post/2015/2015-09-03-notes-on-django-setting-up/</guid>
+      <description>&lt;p&gt;I&amp;rsquo;m starting to develop multiple Django projects, but am still referring to the &lt;em&gt;(excellent)&lt;/em&gt; &lt;a href=&#34;https://docs.djangoproject.com/en/1.8/intro/tutorial01/&#34;&gt;Django tutorial&lt;/a&gt; to get set up, so I thought I&amp;rsquo;d write out the steps I take to set up a new Django project and it&amp;rsquo;s associated development environment, just to help remember it and have an easy reference for the future.&lt;/p&gt;
+
+&lt;p&gt;I work on my Django projects within a &lt;a href=&#34;https://www.vagrantup.com/&#34;&gt;Vagrant&lt;/a&gt; environment.  This creates a nice, easy-to-use, isolated environment that is simple to bring up, tear down and replicate.  It also means I, controversially, don&amp;rsquo;t use &lt;a href=&#34;https://virtualenv.pypa.io/en/latest/&#34;&gt;virtualenv&lt;/a&gt;, as Vagrant isolates things for me.  Though I admit, I&amp;rsquo;m still an amateur and am probably overlooking something important, especially as nothing I&amp;rsquo;ve made has yet made it into production.  To be honest I&amp;rsquo;d really like to move everything to &lt;a href=&#34;https://www.docker.com/&#34;&gt;Docker&lt;/a&gt; but I haven&amp;rsquo;t yet had the time to properly learn Docker or explore the feasability of this.  One of the nice things about Vagrant is that I have a separate VM for my PostgreSQL database.  So, because I&amp;rsquo;m still learning Postgres, and run into migration problems when changing models, it is easy to just destroy and rebuild my database backend quickly.  This does however destroy any data I have, which currently isn&amp;rsquo;t a big problem.  I want to put aside some time in my workflow for creating a script that populates the database with some basic data for development.  But I really need to spend some time learning how to properly deal with the database and migrations, of course.&lt;/p&gt;
+
+&lt;p&gt;My Vagrant setup can be found on my &lt;a href=&#34;https://github.com/bordeltabernacle/Vagrant-Django-PostgreSQL&#34;&gt;Github&lt;/a&gt;, and consists of a Vagrantfile, a couple of bash scripts to provision each machine, and a shared folder that contains a pip requirements file, and will go on to contain my Django project&amp;rsquo;s root folder.  This means I can work on my Django project files on my laptop rather than in the VM.  I have a private &lt;a href=&#34;https://about.gitlab.com/downloads/&#34;&gt;GitLab&lt;/a&gt; server that I use to house all my project repositories, with my root git folder containing the Vagrant setup and this shared folder.&lt;/p&gt;
+
+&lt;p&gt;This is my Vagrantfile:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-ruby&#34;&gt;# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+# These are the ip &amp;amp; port variables that can be changed on a per-project basis
+vagrant_root = File.dirname(__FILE__)
+django_8000_fp = &amp;quot;8011&amp;quot;
+django_80_fp = &amp;quot;8091&amp;quot;
+db_8000_fp = &amp;quot;8012&amp;quot;
+db_80_fp = &amp;quot;8092&amp;quot;
+db_postgres_fp = &amp;quot;25432&amp;quot;
+django_private_ip = &amp;quot;10.101.9.101&amp;quot;
+db_private_ip = &amp;quot;10.101.9.102&amp;quot;
+
+Vagrant.configure(2) do |config|
+
+    config.vm.box = &amp;quot;ubuntu/trusty64&amp;quot;
+    config.vm.box_url = &amp;quot;https://atlas.hashicorp.com/ubuntu/boxes/trusty64&amp;quot;
+    config.vm.provider &amp;quot;virtualbox&amp;quot; do |vb|
+        vb.memory = &amp;quot;1024&amp;quot;
+        vb.cpus = &amp;quot;1&amp;quot;
+        vb.gui = false  # I sometimes run into problems getting the environment
+                        # set up that are fixed by &#39;turning on&#39; the Virtualbox
+                        # screen for the VM, by changing this to true
+    end
+
+    if Vagrant.has_plugin?(&amp;quot;vagrant-hostmanager&amp;quot;)
+        # this is a great Vagrant plugin that takes care of the VM /etc/hosts
+        # files
+        config.hostmanager.enabled = true
+        config.hostmanager.manage_host = true
+        config.hostmanager.ignore_private_ip = false
+        config.hostmanager.include_offline = true
+    end
+
+    # The following sets up two machines, one called django, the other called db.
+    # They both currently have both a NAT network and a private network, which
+    # I think is unneccessary, I initially did it so the dev machine would have
+    # an ip address from the staging server subnet to make setting it up there
+    # easier.  This has created a problem for me in the past when pushing changes
+    # to my Gitlab repos, as the Vagrant machine set up a route to the /16
+    # subnet which included my Gitlab server, so I would have to shut down my
+    # Vagrant machines and delete the route from my routing table to be able to
+    # push commits to my remote repo. Ugh.
+    config.vm.define &amp;quot;django&amp;quot; do |django|
+        django.vm.hostname = &amp;quot;django&amp;quot;
+        django.vm.network &amp;quot;private_network&amp;quot;, ip: django_private_ip, :netmask =&amp;gt; &amp;quot;255.255.0.0&amp;quot;
+        django.vm.network &amp;quot;forwarded_port&amp;quot;, guest: 8000, host: django_8000_fp
+        django.vm.network &amp;quot;forwarded_port&amp;quot;, guest: 80, host: django_80_fp
+        django.vm.synced_folder &amp;quot;#{vagrant_root}/shared&amp;quot;, &amp;quot;/home/vagrant/shared&amp;quot;
+        # set up the shared folder in the shared directory within the current
+        # directory
+        django.vm.provision :shell, :path =&amp;gt; &amp;quot;#{vagrant_root}/provision/djangonode-setup.sh&amp;quot;
+        # initiate the provisioning bash script.
+    end
+
+    config.vm.define &amp;quot;db&amp;quot; do |db|
+        db.vm.hostname = &amp;quot;db&amp;quot;
+        db.vm.network &amp;quot;private_network&amp;quot;, ip: db_private_ip, :netmask =&amp;gt; &amp;quot;255.255.0.0&amp;quot;
+        db.vm.network &amp;quot;forwarded_port&amp;quot;, guest: 8000, host: db_8000_fp
+        db.vm.network &amp;quot;forwarded_port&amp;quot;, guest: 80, host: db_80_fp
+        db.vm.network &amp;quot;forwarded_port&amp;quot;, guest: 5432, host: db_postgres_fp
+        db.vm.provision :shell, :path =&amp;gt; &amp;quot;#{vagrant_root}/provision/dbnode-setup.sh&amp;quot;
+    end
+
+end
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The django provision file just installs pip and runs the requirements file.  The db provision file installs Postgres and sets up the database.&lt;/p&gt;
+
+&lt;p&gt;So, once I&amp;rsquo;ve updated any variables in this Vagrantfile and the db provision file, I&amp;rsquo;ll set up the new remote repo on my Gitlab server.  Then we unchain Django and get developing&amp;hellip;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;laptop$ cd root-project-dir
+laptop$ vagrant up
+Bringing machine &#39;django&#39; up with &#39;virtualbox&#39; provider...
+Bringing machine &#39;db&#39; up with &#39;virtualbox&#39; provider...
+[...omitted for brevity]
+laptop$
+laptop$ vagrant ssh django
+Welcome to Ubuntu 14.04.2 LTS (GNU/Linux 3.13.0-55-generic x86_64)
+
+ * Documentation:  https://help.ubuntu.com/
+
+ System information disabled due to load higher than 1.0
+
+  Get cloud support with Ubuntu Advantage Cloud Guest:
+    http://www.ubuntu.com/business/services/cloud
+
+
+vagrant@django:~$ cd shared/
+vagrant@django:~/shared$ django-admin startproject mysite
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;At this point I need to change the Django settings file to reflect the Postgres database setup:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;DATABASES = {
+    &#39;default&#39;: {
+        &#39;ENGINE&#39;: &#39;django.db.backends.postgresql_psycopg2&#39;,
+        &#39;NAME&#39;: &#39;db&#39;,
+        &#39;USER&#39;: &#39;django&#39;,
+        &#39;PASSWORD&#39;: &#39;django&#39;,
+        &#39;HOST&#39;: &#39;db&#39;,
+        &#39;PORT&#39;: &#39;5432&#39;,
+    }
+}   # Obviously these aren&#39;t the actual names and passwords I use, duh.  Though
+    # the vagrant hostmanager plugin does mean you just have to put db, the name
+    # of the Postgres VM, in as the Database host name, ahhhh niiice.
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Whilst in the settings file let&amp;rsquo;s update our location:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;LANGUAGE_CODE = &#39;en-gb&#39;
+
+TIME_ZONE = &#39;Europe/London&#39;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;and create the &lt;code&gt;static&lt;/code&gt; directory for CSS, JavaScript, fonts etc. and &lt;code&gt;media&lt;/code&gt; directory for images, pdf&amp;rsquo;s and the like:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;STATIC_URL = &#39;/static/&#39;
+STATIC_ROOT = &#39;/home/vagrant/shared/mysite/appname/static/&#39;
+MEDIA_URL = &#39;/static/media/&#39;
+MEDIA_ROOT = &#39;/home/vagrant/shared/mysite/appname/static/media/&#39;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Don&amp;rsquo;t forget to actually create these directories!
+Back in the django VM:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;vagrant@django:~/shared$ cd mysite
+vagrant@django:~/shared/mysite$ python manage.py migrate
+[...omitted for brevity]
+vagrant@django:~/shared/mysite$
+vagrant@django:~/shared/mysite$ python manage.py runserver 0.0.0.0:8000
+
+Performing system checks...
+
+System check identified no issues (0 silenced).
+September 03, 2015 - 12:03:15
+Django version 1.8.2, using settings &#39;mysite.settings&#39;
+Starting development server at http://0.0.0.0:8000/
+Quit the server with CONTROL-C.
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Running the Django server at &lt;code&gt;0.0.0.0:8000&lt;/code&gt; makes the site accessible from outside the VM, on the port specified in the Vagrantfile.  So, if I used the Vagrantfile above, which contains &lt;code&gt;django_8000_fp = &amp;quot;8011&amp;quot;&lt;/code&gt; then in the browser on my laptop I would got o &lt;code&gt;http://localhost:8011&lt;/code&gt; which would bring up the Django site.&lt;/p&gt;
+
+&lt;p&gt;If that works, go on to set up the app:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;vagrant@django:~/shared/mysite$ python manage.py startapp appname
+# pop your app in the INSTALLED_APPS section of the settings.py file
+vagrant@django:~/shared/mysite$ python manage.py makemigrations appname
+vagrant@django:~/shared/mysite$ python manage.py migrate
+# might as well create the admin superuser while we&#39;re here
+vagrant@django:~/shared/mysite$ python manage.py createsuperuser
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Go build stuff.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Memphis Minnie: Down By The Riverside</title>
+      <link>/post/2015/2015-09-02-memphis-minnie-down-by-the-riverside/</link>
+      <pubDate>Wed, 02 Sep 2015 00:00:00 +0000</pubDate>
+      
+      <guid>/post/2015/2015-09-02-memphis-minnie-down-by-the-riverside/</guid>
+      <description>&lt;iframe width=&#34;640&#34; height=&#34;360&#34; src=&#34;https://www.youtube.com/embed/blBZgM4e-CY&#34; frameborder=&#34;0&#34;&gt; &lt;/iframe&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Notes on Python: args &#39;n&#39; kwargs</title>
+      <link>/post/2015/2015-08-26-args-kwargs/</link>
+      <pubDate>Wed, 26 Aug 2015 00:00:00 +0000</pubDate>
+      
+      <guid>/post/2015/2015-08-26-args-kwargs/</guid>
+      <description>&lt;p&gt;Python&amp;rsquo;s &lt;code&gt;*args&lt;/code&gt; &amp;amp; &lt;code&gt;**kwargs&lt;/code&gt; have always intimidated me for some reason.  Since I&amp;rsquo;ve been working with Django they&amp;rsquo;ve turned up more frequently, for instance, when overriding a model&amp;rsquo;s &lt;code&gt;save&lt;/code&gt; function:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;class myModel(models.Model):
+    name = models.CharField()
+
+    def save(self, *args, **kwargs):
+        if not self.id:
+            # Newly created object so set slug
+            self.slug = slugify(self.name)
+
+        super(myModel, self).save(*args, **kwargs)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;And so I thought I&amp;rsquo;d get to the bottom of what they are.&lt;/p&gt;
+
+&lt;p&gt;Basically, they allow a function to accept an indeterminate, variable number of arguments or keyword arguments.  The &lt;code&gt;args&lt;/code&gt; and &lt;code&gt;kwargs&lt;/code&gt; bits are actually not important, it&amp;rsquo;s the &lt;code&gt;*&lt;/code&gt; &amp;amp; &lt;code&gt;**&lt;/code&gt; that are, similar I guess to their use elsewhere as a wildcard symbol.  So you can just use the asterisks on their own or even &lt;code&gt;*thing&lt;/code&gt; &amp;amp; &lt;code&gt;**things&lt;/code&gt;, but don&amp;rsquo;t do that, you&amp;rsquo;ll upset people.&lt;/p&gt;
+
+&lt;p&gt;For instance:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;&amp;gt;&amp;gt;&amp;gt; def print_singers(*args):
+...     # Notice when we do something with `args` we lose the asterisk
+...     for arg in args:
+...         print arg
+...
+&amp;gt;&amp;gt;&amp;gt; print_singers(&#39;R.L. Burnside&#39;)
+R.L. Burnside
+&amp;gt;&amp;gt;&amp;gt;
+&amp;gt;&amp;gt;&amp;gt; print_singers(&#39;R.L. Burnside&#39;, &#39;Bessie Smith&#39;, &#39;Skip James&#39;, &#39;Memphis Minnie&#39;)
+R.L. Burnside
+Bessie Smith
+Skip James
+Memphis Minnie
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;We can also include a formal parameter alongside our &lt;code&gt;*args&lt;/code&gt;.  A formal parameter just means it is mandatory, that an argument must be passed to it.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;&amp;gt;&amp;gt;&amp;gt; def print_singers(genre, *args):
+...     print &#39;Genre: &#39; + genre
+...     for arg in args:
+...         print arg
+...
+&amp;gt;&amp;gt;&amp;gt; print_singers(&#39;Blues&#39;, &#39;R.L. Burnside&#39;, &#39;Bessie Smith&#39;, &#39;Skip James&#39;, &#39;Memphis Minnie&#39;)
+Genre: Blues
+R.L. Burnside
+Bessie Smith
+Skip James
+Memphis Minnie
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This formal parameter is positional, so we have to make sure we pass our arguments to the function in order:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;&amp;gt;&amp;gt;&amp;gt; print_singers(&#39;R.L. Burnside&#39;, &#39;Blues&#39;, &#39;Bessie Smith&#39;, &#39;Skip James&#39;, &#39;Memphis Minnie&#39;)
+Genre: R.L. Burnside
+Blues
+Bessie Smith
+Skip James
+Memphis Minnie
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This doesn&amp;rsquo;t, however, work the other way around:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;&amp;gt;&amp;gt;&amp;gt; def print_singers(*args, genre):
+  File &amp;quot;&amp;lt;stdin&amp;gt;&amp;quot;, line 1
+    def print_singers(*args, genre):
+                                 ^
+SyntaxError: invalid syntax
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;code&gt;**kwargs&lt;/code&gt; is much the same, but with named, &lt;code&gt;key/value&lt;/code&gt;, arguments:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;&amp;gt;&amp;gt;&amp;gt; def blues_singer(**kwargs):
+...    # Notice we use `.items`, as `kwargs` returns a dictionary
+...    for key, value in kwargs.items():
+...        print key + &#39; = &#39; + value
+...
+&amp;gt;&amp;gt;&amp;gt; blues_singer(name=&#39;Memphis Minnie&#39;)
+name = Memphis Minnie
+&amp;gt;&amp;gt;&amp;gt;
+&amp;gt;&amp;gt;&amp;gt; blues_singer(name=&#39;Memphis Minnie&#39;, born=&#39;3rd June 1897&#39;, died=&#39;6th August 1973&#39;)
+born = 3rd June 1897
+name = Memphis Minnie
+died = 6th August 1973
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;code&gt;**kwargs&lt;/code&gt; also works alongside formal parameters:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;&amp;gt;&amp;gt;&amp;gt; def blues_singer(name, **kwargs):
+...     print name
+...     for key, value in kwargs.items():
+...         print key + &#39; = &#39; + value
+...
+&amp;gt;&amp;gt;&amp;gt; blues_singer(name=&#39;Memphis Minnie&#39;, born=&#39;3rd June 1897&#39;, died=&#39;6th August 1973&#39;)
+Memphis Minnie
+born = 3rd June 1897
+died = 6th August 1973
+&amp;gt;&amp;gt;&amp;gt;
+&amp;gt;&amp;gt;&amp;gt; blues_singer(name=&#39;Memphis Minnie&#39;, born=&#39;3rd June 1897&#39;, died=&#39;6th August 1973&#39;, popular_songs=&#39;Me and My Chauffeur, Evil Devil Woman Blues&#39;)
+Memphis Minnie
+born = 3rd June 1897
+died = 6th August 1973
+popular_songs = Me and My Chauffeur, Evil Devil Woman Blues
+&amp;gt;&amp;gt;&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;As well as being used in defining functions &lt;code&gt;*args&lt;/code&gt; &amp;amp; &lt;code&gt;**kwargs&lt;/code&gt; can also be used when calling functions:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;&amp;gt;&amp;gt;&amp;gt; def blues_singer(name, born, died):
+...     print name + &#39; was born on &#39; + born + &#39; and died on &#39; + died
+...
+&amp;gt;&amp;gt;&amp;gt; # We define our arguments in a separate variable
+&amp;gt;&amp;gt;&amp;gt; memphis_minnie = (&#39;Memphis Minnie&#39;, &#39;3rd June 1897&#39;, &#39;6th August 1973&#39;)
+&amp;gt;&amp;gt;&amp;gt;
+&amp;gt;&amp;gt;&amp;gt; # We call the function with the `*` before our arguments variable
+&amp;gt;&amp;gt;&amp;gt; blues_singer(*memphis_minnie)
+Memphis Minnie was born on 3rd June 1897 and died on 6th August 1973
+&amp;gt;&amp;gt;&amp;gt;
+&amp;gt;&amp;gt;&amp;gt; # Using `args` for our variable name might make more sense
+&amp;gt;&amp;gt;&amp;gt; args = (&#39;Memphis Minnie&#39;, &#39;3rd June 1897&#39;, &#39;6th August 1973&#39;)
+&amp;gt;&amp;gt;&amp;gt;
+&amp;gt;&amp;gt;&amp;gt; blues_singer(*args)
+Memphis Minnie was born on 3rd June 1897 and died on 6th August 1973
+&amp;gt;&amp;gt;&amp;gt;
+&amp;gt;&amp;gt;&amp;gt; args = (&#39;Bessie Smith&#39;, &#39;15th April 1894&#39;, &#39;26th September 1937&#39;)
+&amp;gt;&amp;gt;&amp;gt;
+&amp;gt;&amp;gt;&amp;gt; blues_singer(*args)
+Bessie Smith was born on 15th April 1894 and died on 26th September 1937
+&amp;gt;&amp;gt;&amp;gt;
+&amp;gt;&amp;gt;&amp;gt; # And we can pass the values in as a combination of formal parameters and a list of `args`
+&amp;gt;&amp;gt;&amp;gt; args = (&#39;15th April 1894&#39;, &#39;26th September 1937&#39;)
+&amp;gt;&amp;gt;&amp;gt;
+&amp;gt;&amp;gt;&amp;gt; blues_singer(&#39;Memphis Minnie&#39;, *args)
+Memphis Minnie was born on 3rd June 1897 and died on 6th August 1973
+&amp;gt;&amp;gt;&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Using &lt;code&gt;*args&lt;/code&gt; when calling our function unpacks the values in the &lt;code&gt;args&lt;/code&gt; variable and passes them as positional arguments to the function.
+And if we try and ask it to unpack and pass a different number of values than is asked for by the function?&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;&amp;gt;&amp;gt;&amp;gt; args = (&#39;Bessie Smith&#39;, &#39;15th April 1894&#39;)
+&amp;gt;&amp;gt;&amp;gt;
+&amp;gt;&amp;gt;&amp;gt; blues_singer(*args)
+Traceback (most recent call last):
+  File &amp;quot;&amp;lt;stdin&amp;gt;&amp;quot;, line 1, in &amp;lt;module&amp;gt;
+TypeError: blues_singer() takes exactly 3 arguments (2 given)
+&amp;gt;&amp;gt;&amp;gt;
+&amp;gt;&amp;gt;&amp;gt; args = (&#39;Bessie Smith&#39;, &#39;15th April 1894&#39;, &#39;26th September 1937&#39;, &#39;Gimme a Pigfoot and a Bottle of Beer&#39;)
+&amp;gt;&amp;gt;&amp;gt;
+&amp;gt;&amp;gt;&amp;gt; blues_singer(*args)
+Traceback (most recent call last):
+  File &amp;quot;&amp;lt;stdin&amp;gt;&amp;quot;, line 1, in &amp;lt;module&amp;gt;
+TypeError: blues_singer() takes exactly 3 arguments (4 given)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Just the same as if &lt;code&gt;*args&lt;/code&gt; wasn&amp;rsquo;t being used.
+As before, using &lt;code&gt;**kwargs&lt;/code&gt; is the same, except we pass a dictionary to the function:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;&amp;gt;&amp;gt;&amp;gt; def blues_singer(name, born, died):
+...      print name + &#39; was born on &#39; + born + &#39; and died on &#39; + died
+...
+&amp;gt;&amp;gt;&amp;gt; kwargs = {&#39;name&#39;:&#39;Memphis Minnie&#39;, &#39;born&#39;:&#39;3rd June 1897&#39;, &#39;died&#39;:&#39;6th August 1973&#39;}
+&amp;gt;&amp;gt;&amp;gt;
+&amp;gt;&amp;gt;&amp;gt; blues_singer(**kwargs)
+Memphis Minnie was born on 3rd June 1897 and died on 6th August 1973
+&amp;gt;&amp;gt;&amp;gt;
+&amp;gt;&amp;gt;&amp;gt; # We can also pass in the values as a combination of formal parameters and a `kwargs` dictionary
+&amp;gt;&amp;gt;&amp;gt;
+&amp;gt;&amp;gt;&amp;gt; kwargs = {&#39;born&#39;:&#39;3rd June 1897&#39;, &#39;died&#39;:&#39;6th August 1973&#39;}
+&amp;gt;&amp;gt;&amp;gt;
+&amp;gt;&amp;gt;&amp;gt; blues_singer(name=&#39;Memphis Minnie&#39;, **kwargs)
+Memphis Minnie was born on 3rd June 1897 and died on 6th August 1973
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;So, that&amp;rsquo;s that, then.&lt;/p&gt;
+
+&lt;p&gt;In writing this post I borrowed heavily from:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&#34;http://agiliq.com/blog/2012/06/understanding-args-and-kwargs/&#34;&gt;Agiliq&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;http://book.pythontips.com/en/latest/args_and_kwargs.html&#34;&gt;Python Tips&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://stackoverflow.com/questions/3394835/args-and-kwargs&#34;&gt;Stack Overflow&lt;/a&gt; (of course!)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Many thanks to these folks for helping me to understand this.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Sister Rosetta Tharpe: Didn&#39;t It Rain</title>
+      <link>/post/2015/2015-08-25-sister-rosetta-tharpe-didnt-it-rain/</link>
+      <pubDate>Tue, 25 Aug 2015 00:00:00 +0000</pubDate>
+      
+      <guid>/post/2015/2015-08-25-sister-rosetta-tharpe-didnt-it-rain/</guid>
+      <description>&lt;iframe width=&#34;640&#34; height=&#34;360&#34; src=&#34;https://www.youtube.com/embed/SR2gR6SZC2M&#34; frameborder=&#34;0&#34;&gt; &lt;/iframe&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Notes on Node.js: Dipping My Toes In</title>
+      <link>/post/2015/2015-08-21-node-dipping-toes/</link>
+      <pubDate>Fri, 21 Aug 2015 00:00:00 +0000</pubDate>
+      
+      <guid>/post/2015/2015-08-21-node-dipping-toes/</guid>
+      <description>&lt;p&gt;I started using &lt;a href=&#34;http://exercism.io/&#34;&gt;exercism.io&lt;/a&gt; this morning after hearing about it on &lt;a href=&#34;http://www.codenewbie.org/podcast/nitpicks-and-devils&#34;&gt;Code Newbies&lt;/a&gt;, mainly to get more practice with Python.  I&amp;rsquo;m also learning JavaScript as well and, seeing there was a JS track, I thought I&amp;rsquo;d have a glance at it, and inadvertently started using node.js, something I&amp;rsquo;ve wanted to do for a while now.  I got that new &lt;em&gt;&amp;lsquo;don&amp;rsquo;t quite understand but feel real excited&amp;rsquo;&lt;/em&gt; feeling.&lt;/p&gt;
+
+&lt;p&gt;As far as my understanding goes node.js is basically JavaScript, the programming language of the web, on a computer, desktop/laptop/server etc., rather than in a browser. It&amp;rsquo;s easy enough to work out how to install node.js so I won&amp;rsquo;t go into that here.
+I started out with a &lt;code&gt;Hello World&lt;/code&gt; exercise, as you do.  I gotta say, it looked strange, no &lt;code&gt;$(document).ready()&lt;/code&gt; here, and I did end up sneaking a peek &lt;a href=&#34;https://github.com/exercism/xjavascript/blob/master/hello-world/example.js&#34;&gt;here&lt;/a&gt;.  I really didn&amp;rsquo;t know where to start with fixing the given code to make the tests pass, my mind was going down overly complicated unorganised paths, and I figured I&amp;rsquo;d be better off working backwards.  Which is what this will be a part of, break apart the code, understand the parts.&lt;/p&gt;
+
+&lt;p&gt;So, anyway, this is the code.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-javascript&#34;&gt;&#39;use strict&#39;;
+
+var HelloWorld = function() {};
+
+HelloWorld.prototype.hello = function(name) {
+  name = name || &#39;world&#39;;
+  return &#39;Hello, &#39; + name + &#39;!&#39;;
+};
+
+module.exports = HelloWorld;
+
+var helloWorld = new HelloWorld();
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The &lt;code&gt;var&lt;/code&gt; &amp;amp; &lt;code&gt;function&lt;/code&gt; stuff I understand, but &lt;code&gt;strict&lt;/code&gt;? &lt;code&gt;prototypes&lt;/code&gt;? &lt;code&gt;module.exports&lt;/code&gt;? Wha&amp;rsquo;fu&amp;rsquo;?&lt;/p&gt;
+
+&lt;p&gt;What was interesting was running it.  Just like Python really; &lt;code&gt;node .\hello-world.js&lt;/code&gt; in the CLI.  Let&amp;rsquo;s stick a &lt;code&gt;console.log(&#39;Hello node, whaddya know?&#39;)&lt;/code&gt; in there:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-javascript&#34;&gt; &amp;gt; node .\hello-world.js
+Hello node, whaddya know?
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Cool, huh? And to run the tests:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-javascript&#34;&gt; &amp;gt; jasmine-node .\hello-world.js
+
+
+Finished in 0 seconds
+0 tests, 0 assertions, 0 failures, 0 skipped
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;So, it&amp;rsquo;s basic, it&amp;rsquo;s obvious, but it&amp;rsquo;s blowin&amp;rsquo; my mind just a bit.  I&amp;rsquo;m well excited to get started with this and explore it further.  I&amp;rsquo;m gonna go over this little code snippet and work it out as best I can, and then who knows, maybe I&amp;rsquo;ll get a MEAN stack up and running for my &lt;em&gt;new awesome web app idea&lt;/em&gt;.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Notes on Python: Optional Arguments</title>
+      <link>/post/2015/2015-08-21-python-function-arguments/</link>
+      <pubDate>Fri, 21 Aug 2015 00:00:00 +0000</pubDate>
+      
+      <guid>/post/2015/2015-08-21-python-function-arguments/</guid>
+      <description>&lt;p&gt;Passing an optional argument to a Python function.  This is pretty basic stuff but I didn&amp;rsquo;t know it, or at least it hadn&amp;rsquo;t properly registered as a thing in my mind until today.  This post doesn&amp;rsquo;t even take into consideration &lt;code&gt;*args&lt;/code&gt; &amp;amp; &lt;code&gt;**kwargs&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;Here we have a simple Python function, which takes one argument:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;&amp;gt;&amp;gt;&amp;gt; def the_blues(name):
+...     print name + &#39; got the blues.&#39;
+...
+&amp;gt;&amp;gt;&amp;gt;
+&amp;gt;&amp;gt;&amp;gt; the_blues(&#39;Big Bill Broonzy&#39;)
+Big Bill Broonzy got the blues.
+&amp;gt;&amp;gt;&amp;gt;
+&amp;gt;&amp;gt;&amp;gt; the_blues()
+Traceback (most recent call last):
+  File &amp;quot;&amp;lt;stdin&amp;gt;&amp;quot;, line 1, in &amp;lt;module&amp;gt;
+TypeError: the_blues() takes exactly 1 argument (0 given)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;When we call the function with an argument we&amp;rsquo;re all good.  But when we don&amp;rsquo;t include an argument, no dice, we get an error.  Fair enough, like it says &lt;code&gt;the_blues() takes exactly 1 argument (0 given)&lt;/code&gt;.
+Often, I write scripts for other people to use.  My young son can be a bit timid around other people sometimes, but I tell him &lt;em&gt;&amp;ldquo;People are O.K.&amp;rdquo;&lt;/em&gt; Unfortunately other people don&amp;rsquo;t always use scripts the way the writer intended.  You can&amp;rsquo;t be too strict with these things, you&amp;rsquo;ve gotta account for people doing things differently, always.
+So let&amp;rsquo;s stick an &lt;code&gt;if/else&lt;/code&gt; in this function to make up for this.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;&amp;gt;&amp;gt;&amp;gt; def the_blues(name):
+...     if name != None:
+...         print name + &#39; got the blues.&#39;
+...     else:
+...         print &#39;You got the blues.&#39;
+...
+&amp;gt;&amp;gt;&amp;gt; the_blues(&#39;Sister Rosetta Tharpe&#39;)
+Sister Rosetta Tharpe got the blues.
+&amp;gt;&amp;gt;&amp;gt; the_blues()
+Traceback (most recent call last):
+  File &amp;quot;&amp;lt;stdin&amp;gt;&amp;quot;, line 1, in &amp;lt;module&amp;gt;
+TypeError: the_blues() takes exactly 1 argument (0 given)
+
+# or
+
+&amp;gt;&amp;gt;&amp;gt; def the_blues(name):
+...      if name:
+...          print name + &#39; got the blues.&#39;
+...      else:
+...          print &#39;You got the blues.&#39;
+...
+&amp;gt;&amp;gt;&amp;gt; the_blues(&#39;Memphis Slim&#39;)
+Memphis Slim got the blues.
+&amp;gt;&amp;gt;&amp;gt; the_blues()
+Traceback (most recent call last):
+  File &amp;quot;&amp;lt;stdin&amp;gt;&amp;quot;, line 1, in &amp;lt;module&amp;gt;
+TypeError: the_blues() takes exactly 1 argument (0 given)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Same again, no dice.
+So, this is where an optional argument can come in handy.  Of course, this is also a pretty good situation to pull in a &lt;code&gt;try/except&lt;/code&gt;.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;&amp;gt;&amp;gt;&amp;gt; def the_blues(name=&#39;&#39;):
+...     if name:
+...         print name + &#39; got the blues.&#39;
+...     else:
+...         print &#39;You got the blues.&#39;
+...
+&amp;gt;&amp;gt;&amp;gt; the_blues(&#39;J. B. Lenoir&#39;)
+J. B. Lenoir got the blues.
+&amp;gt;&amp;gt;&amp;gt; the_blues()
+You got the blues.
+
+# or even
+
+&amp;gt;&amp;gt;&amp;gt; def the_blues(name=&#39;You&#39;):
+...     print name + &#39; got the blues.&#39;
+...
+&amp;gt;&amp;gt;&amp;gt; the_blues(&amp;quot;Lightnin&#39; Hopkins&amp;quot;)
+Lightnin&#39; Hopkins got the blues.
+&amp;gt;&amp;gt;&amp;gt; the_blues()
+You got the blues.
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;By defining our argument as &lt;code&gt;name=&lt;/code&gt; rather than &lt;code&gt;name&lt;/code&gt;, and passing an initial value to it, we make it optional to give an argument when calling the function.  We&amp;rsquo;re basically saying &lt;em&gt;&amp;lsquo;Look, we&amp;rsquo;ll use &lt;code&gt;this value&lt;/code&gt; unless you give us something different&amp;rsquo;&lt;/em&gt;.&lt;/p&gt;
+
+&lt;p&gt;Thanks to &lt;a href=&#34;http://exercism.io/&#34;&gt;exercism.io&lt;/a&gt; for making me aware of this.  Exercism is very cool, check it out. Never stop learning.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Installing KVM &amp; OVS on Ubuntu</title>
+      <link>/post/2015/2015-04-24-kvm-ovs-ubuntu/</link>
+      <pubDate>Fri, 24 Apr 2015 00:00:00 +0000</pubDate>
+      
+      <guid>/post/2015/2015-04-24-kvm-ovs-ubuntu/</guid>
+      <description>&lt;p&gt;Setting up the lab to explore Linux virtualisation &amp;amp; OpenvSwitch&lt;/p&gt;
+
+&lt;p&gt;KVM &amp;amp; OpenvSwitch are technologies I&amp;rsquo;ve wanted to learn for a while now. I think it&amp;rsquo;ll really help my understanding and knowledge of Linux and the underlying mechanics of virtualisation and how it interacts with the physical network.&lt;/p&gt;
+
+&lt;p&gt;Installing KVM is already well documented &lt;a href=&#34;https://help.ubuntu.com/community/KVM/Installation&#34;&gt;here&lt;/a&gt;, but for completeness here is my installation process:&lt;/p&gt;
+
+&lt;p&gt;First, update, and &lt;a href=&#34;http://www.cyberciti.biz/faq/linux-xen-vmware-kvm-intel-vt-amd-v-support/&#34;&gt;check&lt;/a&gt; your hardware can support virtualisation.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ sudo apt-get -y update
+$ egrep -c &#39;(vmx|svm)&#39; /proc/cpuinfo
+8
+$ kvm-ok
+INFO: /dev/kvm exists
+KVM acceleration can be used
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;code&gt;egrep&lt;/code&gt; is like &lt;code&gt;grep&lt;/code&gt;, a command that prints out any line with the given regular expression. So, here we&amp;rsquo;re searching the &lt;strong&gt;&lt;em&gt;cpuinfo&lt;/em&gt;&lt;/strong&gt; file for any lines containing &lt;strong&gt;&lt;em&gt;vmx&lt;/em&gt;&lt;/strong&gt; or &lt;strong&gt;&lt;em&gt;svm&lt;/em&gt;&lt;/strong&gt;. &lt;strong&gt;&lt;em&gt;vmx&lt;/em&gt;&lt;/strong&gt; is the flag that virtualisation is enabled in the BIOS for Intel CPUs &amp;amp; &lt;strong&gt;&lt;em&gt;svm&lt;/em&gt;&lt;/strong&gt; is the same for AMD CPUs. The &lt;code&gt;-c&lt;/code&gt; option is for count, so here we only print out the number of lines that match, rather than the lines themselves.
+So, a result of 1 or more means virtualisation is enabled. Here, I&amp;rsquo;ve got 8 lines in the &lt;strong&gt;&lt;em&gt;cpuinfo&lt;/em&gt;&lt;/strong&gt; file matching &lt;strong&gt;&lt;em&gt;vmx&lt;/em&gt;&lt;/strong&gt;.
+If you do get a 0, reboot your computer, go into the BIOS menu and make sure you&amp;rsquo;ve got virtualisation enabled.&lt;/p&gt;
+
+&lt;p&gt;The &lt;a href=&#34;http://manpages.ubuntu.com/manpages//lucid/man1/kvm-ok.1.html&#34;&gt;&lt;code&gt;kvm-ok&lt;/code&gt;&lt;/a&gt; program verifies whether your machine is able to run KVM virtual machines. It actually checks the &lt;strong&gt;&lt;em&gt;cpuinfo&lt;/em&gt;&lt;/strong&gt; file, like we did in the previous command. It also checks whether the kernel has detected the CPUs Virtualisation Technology (VT) capability, and looks to see if &lt;code&gt;/dev/kvm&lt;/code&gt; exists.&lt;/p&gt;
+
+&lt;p&gt;The capabilities exist, so let&amp;rsquo;s install KVM.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ sudo apt-get install qemu-kvm libvirt-bin ubuntu-vm-builder bridge-utils virtinst
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;From the Ubuntu &lt;a href=&#34;https://help.ubuntu.com/community/KVM/Installation&#34;&gt;pages&lt;/a&gt;:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;libvirt-bin provides libvirtd which you need to administer qemu and kvm instances using libvirt&lt;/li&gt;
+&lt;li&gt;qemu-kvm is the backend&lt;/li&gt;
+&lt;li&gt;ubuntu-vm-builder powerful command line tool for building virtual machines&lt;/li&gt;
+&lt;li&gt;bridge-utils provides a bridge from your network to the virtual machines&lt;/li&gt;
+&lt;li&gt;virtinst provides an easy way to provision operating systems into virtual machines and an API to the virt-manager application for its graphical VM creation wizard.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Ensure the user is added to the &lt;code&gt;libvirtd&lt;/code&gt; &amp;amp; &lt;code&gt;kvm&lt;/code&gt; groups.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ sudo adduser `id -un` libvirtd &amp;amp;&amp;amp; sudo adduser `id -un` kvm
+The user `rob&#39; is already a member of `libvirtd&#39;.
+The user `rob&#39; is already a member of `kvm&#39;.
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;I found it was good to do a reboot here, just to make sure this membership is in effect.&lt;/p&gt;
+
+&lt;p&gt;Verify the installation. When we get round to installing some VMs, they should show up in this list.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ virsh -c qemu:///system list
+Id Name State
+----------------------------------------------------
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;And we&amp;rsquo;re all set.&lt;/p&gt;
+
+&lt;p&gt;On a separate machine, I&amp;rsquo;ve set up a &lt;a href=&#34;http://xubuntu.org/&#34;&gt;Xubuntu&lt;/a&gt; VM, and installed &lt;strong&gt;&lt;em&gt;Virtual Machine Manager (VMM)&lt;/em&gt;&lt;/strong&gt;, just to give me a visual understanding of my VMs if need be.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ sudo apt-get install virt-manager
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;strong&gt;&lt;em&gt;VMM&lt;/em&gt;&lt;/strong&gt; is super simple and intuitive. I love using the command line, but I still find having visual cues really helps my understanding of a situation, too much time in Windows &amp;amp; vSphere perhaps!&lt;/p&gt;
+
+&lt;p&gt;For the OpenvSwitch installation I pretty faithfully followed Scott Lowe&amp;rsquo;s &lt;a href=&#34;http://blog.scottlowe.org/2012/08/17/installing-kvm-and-open-vswitch-on-ubuntu/&#34;&gt;example&lt;/a&gt;, with a couple of differences.&lt;/p&gt;
+
+&lt;p&gt;Right, let&amp;rsquo;s get up-to-date, as per.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ sudo apt-get -y update &amp;amp;&amp;amp; sudo apt-get -y dist-upgrade
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Make way for OVS by removing the default &lt;strong&gt;&lt;em&gt;libvirt&lt;/em&gt;&lt;/strong&gt; bridge.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ sudo virsh net-destroy default
+$ sudo virsh net-autostart --disable default
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Remove &lt;a href=&#34;http://linux.die.net/man/8/ebtables&#34;&gt;&lt;strong&gt;&lt;em&gt;ebtables&lt;/em&gt;&lt;/strong&gt;&lt;/a&gt;, a Linux ethernet firewall.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ sudo aptitude purge ebtables
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Install OpenvSwitch.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ sudo apt-get install openvswitch-controller openvswitch-switch openvswitch-datapath-source
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The &lt;code&gt;openvswitch-brcompat&lt;/code&gt; has apparently been removed now from OVS, so it can be ignored.
+Once that&amp;rsquo;s finished, try starting OVS, though I found it was already running.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ sudo service openvswitch-switch start
+start: Job is already running: openvswitch-switch
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Run the OVS show command, you should just get an empty config.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ sudo ovs-vsctl show
+7d84d624-632b-4d2c-93ad-56ad3cc543cc
+ovs_version: &amp;quot;2.0.2&amp;quot;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The &lt;code&gt;ovs-vsctl&lt;/code&gt; command, according to the &lt;a href=&#34;http://openvswitch.org/support/dist-docs/ovs-vsctl.8.pdf&#34;&gt;man page&lt;/a&gt;, is a &lt;em&gt;&amp;ldquo;utility for querying and configuring ovs-vswitchd&amp;rdquo;&lt;/em&gt;. &lt;code&gt;ovs-vswitchd&lt;/code&gt; is, again according to the &lt;a href=&#34;http://openvswitch.org/support/dist-docs/ovs-vswitchd.8.pdf&#34;&gt;man page&lt;/a&gt;, the daemon that manages and controls the OVS switch(es). As far as I understand it &lt;code&gt;ovs-vsctl&lt;/code&gt; queries and configures &lt;code&gt;ovsdb-server&lt;/code&gt; &lt;em&gt;(which provides the interface to the OVS databases&lt;/em&gt; &lt;a href=&#34;http://openvswitch.org/support/dist-docs/ovsdb-server.1.pdf&#34;&gt;[man page]&lt;/a&gt; &lt;em&gt;)&lt;/em&gt;, and &lt;code&gt;ovs-vswitchd&lt;/code&gt; then implements the changes. To be honest I&amp;rsquo;m not entirely sure of this process, I need to spend some more time reading &lt;a href=&#34;http://networkstatic.net/getting-started-ovsdb/&#34;&gt;this&lt;/a&gt; I think.
+Anyway, &lt;code&gt;ovs-vsctl show&lt;/code&gt; &amp;ldquo;Prints a brief overview of the database contents.&amp;rdquo; Of which, currently, we have none.&lt;/p&gt;
+
+&lt;p&gt;Now, the OVS bridge has to be created. When I was doing this I was SSH&amp;rsquo;d into the NIC I was configuring (em1), and creating the bridge brought the interface down. So, either make sure you have physical access to the machine, or SSH into another NIC.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ sudo ovs-vsctl add-br br0
+$ sudo ovs-vsctl add-port br0 em1
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Run the show command again, and we should have a configuration.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ sudo ovs-vsctl show
+7d84d624-632b-4d2c-93ad-56ad3cc543cc
+Bridge &amp;quot;br0&amp;quot;
+Port &amp;quot;em1&amp;quot;
+Interface &amp;quot;em1&amp;quot;
+Port &amp;quot;br0&amp;quot;
+Interface &amp;quot;br0&amp;quot;
+type: internal
+ovs_version: &amp;quot;2.0.2&amp;quot;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Now, the interfaces need to be configured.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ sudo vim /etc/network/interfaces
+
+# This file describes the network interfaces available on your system
+# and how to activate them. For more information, see interfaces(5).
+
+# The loopback network interface
+auto lo
+iface lo inet loopback
+
+# The primary network interface
+auto em1
+iface em1 inet static
+
+# The OVS bridge interface
+auto br0
+iface br0 inet static
+address 10.0.0.4
+network 10.0.0.0
+netmask 255.255.0.0
+broadcast 10.0.255.255
+gateway 10.0.0.2
+dns-nameservers 8.8.8.8 8.8.4.4
+dns-search test.local
+bridge_ports em1
+bridge_fd 9
+bridge_hello 2
+bridge_maxage 12
+bridge_stp off
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This is just a copy of Scott&amp;rsquo;s configuration, with my network details in it.
+At this point I rebooted the server and ran &lt;code&gt;ifconfig em1 up&lt;/code&gt; which brought my interface back up and I was able to SSH back into the machine.&lt;/p&gt;
+
+&lt;p&gt;Where the result of &lt;code&gt;ifconfig&lt;/code&gt; was previously&amp;hellip;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ ifconfig
+em1 Link encap:Ethernet HWaddr a4:ba:db:4d:0f:82
+inet addr:10.0.0.4 Bcast:10.0.255.255 Mask:255.255.0.0
+UP BROADCAST RUNNING MULTICAST MTU:1500 Metric:1
+RX packets:74620 errors:0 dropped:0 overruns:0 frame:0
+TX packets:2094 errors:0 dropped:0 overruns:0 carrier:0
+collisions:0 txqueuelen:1000
+RX bytes:7873976 (7.8 MB) TX bytes:216238 (216.2 KB)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;is now&amp;hellip;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ ifconfig
+br0 Link encap:Ethernet HWaddr a4:ba:db:4d:0f:82
+inet addr:10.0.0.4 Bcast:10.0.255.255 Mask:255.255.0.0
+inet6 addr: fe80::a6ba:dbff:fe4d:f82/64 Scope:Link
+UP BROADCAST RUNNING MULTICAST MTU:1500 Metric:1
+RX packets:73075 errors:0 dropped:257 overruns:0 frame:0
+TX packets:2101 errors:0 dropped:0 overruns:0 carrier:0
+collisions:0 txqueuelen:0
+RX bytes:6283264 (6.2 MB) TX bytes:199006 (199.0 KB)
+
+em1 Link encap:Ethernet HWaddr a4:ba:db:4d:0f:82
+UP BROADCAST RUNNING MULTICAST MTU:1500 Metric:1
+RX packets:74620 errors:0 dropped:0 overruns:0 frame:0
+TX packets:2094 errors:0 dropped:0 overruns:0 carrier:0
+collisions:0 txqueuelen:1000
+RX bytes:7873976 (7.8 MB) TX bytes:216238 (216.2 KB)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;So, I&amp;rsquo;m actually connecting to the bridge interface rather than the NIC.&lt;/p&gt;
+
+&lt;p&gt;Hopefully, this is just the beginning of an interesting adventure, in the meantime I&amp;rsquo;m going to read &lt;a href=&#34;http://keepingitclassless.net/2013/10/introduction-to-open-vswitch/&#34;&gt;this&lt;/a&gt; again.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Installing oVirt</title>
+      <link>/post/2015/2015-04-13-ovirt-installation/</link>
+      <pubDate>Mon, 13 Apr 2015 00:00:00 +0000</pubDate>
+      
+      <guid>/post/2015/2015-04-13-ovirt-installation/</guid>
+      <description>&lt;p&gt;Installing &lt;a href=&#34;http://www.ovirt.org/Home&#34;&gt;oVirt&lt;/a&gt;, the upstream project of  &lt;a href=&#34;https://www.redhat.com/en/technologies/virtualization/enterprise-virtualization&#34;&gt;Red Hat&amp;rsquo;s Enterprise Virtualization&lt;/a&gt; product, and &lt;a href=&#34;https://www.vmware.com/products/vsphere/&#34;&gt;vSphere&lt;/a&gt; alternative.&lt;/p&gt;
+
+&lt;p&gt;I started this install on Fedora, using the latest release, 21, ignoring the oVirt website where it said &lt;em&gt;&amp;ldquo;Important: It is recommended that you install oVirt on Fedora 20&amp;rdquo;&lt;/em&gt;, assuming the latest is the greatest, only to find that oVirt is not available on Fedora 21.  This was the first bump on a rocky road.  I did start off installing on Fedora 20 but ended up using CentOS 7 instead.  If you&amp;rsquo;re interested in using Fedora 20, you can download it &lt;a href=&#34;http://torrents.fedoraproject.org/&#34;&gt;here&lt;/a&gt; or &lt;a href=&#34;http://www.cyberciti.biz/linux-news/fedora-linux-20-download-cd-dvd-iso/&#34;&gt;here&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;The main issue I found was DNS; resolving the server&amp;rsquo;s hostname.  I&amp;rsquo;m doing this on a private lab network, and haven&amp;rsquo;t got round to setting up a DNS server yet, so I had to configure my hosts file and set up &lt;a href=&#34;http://www.thekelleys.org.uk/dnsmasq/doc.html&#34;&gt;dnsmasq&lt;/a&gt;. From oVirt&amp;rsquo;s troubleshooting page&amp;hellip;&lt;/p&gt;
+
+&lt;p&gt;*&amp;rdquo;&lt;strong&gt;When running engine-setup, I get the message &amp;ldquo;myhost.local did not resolve into an IP address&amp;rdquo;, but setting up bind locally is hard. Is there an easy way to spoof full DNS locally?&lt;/strong&gt;*
+&lt;em&gt;The easiest solution is to use dnsmasq for DNS. You then use the IP address of your engine as your DNS server, and in /etc/dnsmasq.conf you point to your regular DNS servers with &amp;ldquo;server=8.8.8.8&amp;rdquo; (for example). You will also need to open port 53 in iptables to enable computers on your home network to use this DNS server. To do this, add the line &amp;ldquo;-A INPUT -m state &amp;ndash;state NEW -m udp -p udp &amp;ndash;dport 53 -j ACCEPT&amp;rdquo; to your iptables configuration, remembering to add it also to any configuration files required to ensure that the option persists across reboots.&amp;rdquo;&lt;/em&gt;&lt;/p&gt;
+
+&lt;p&gt;First things first, after a minimal install of CentOS 7; update, reboot &amp;amp; install a few programs:
+- net-tools for the ifconfig command
+- vim as my text editor of choice
+- bind-utils to check my DNS
+- dnsmasq to set up my DNS&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ sudo yum update
+$ sudo reboot
+$ sudo yum -y install net-tools vim bind-utils dnsmasq
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;A quick check of the DNS shows the hostname is not resolving to my ip address:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ host 10.0.0.5
+Host 5.0.0.10.in-addr.arpa. not found: 3(NXDOMAIN)
+
+$ host oVirt-01
+oVirt-01.lab-test.local has address 127.0.53.53
+oVirt-01.lab-test.local mail is handled by 10 your-dns-needs-immediate-attention.dev.
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Configure hosts file:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;# ==={ open up the hosts file }===
+$ sudo vim /etc/hosts
+127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
+# ==={ add in server ip address &amp;amp; fqdn }===
+10.0.0.5 oVirt-01.lab-test.local oVirt01
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Configure dnsmasq:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ sudo systemctl enable /usr/lib/systemd/system/dnsmasq.service
+$ sudo systemctl start dnsmasq.service
+
+# ==={ open up the dnsmasq.conf file }===
+$ sudo vim /etc/dnsmasq.conf
+# ==={ add in your DNS servers, here I&#39;m just using Google&#39;s }===
+server=8.8.8.8
+server=8.8.4.4
+# ==={ add in the listen-address for the localhost }===
+listen-address=127.0.0.1
+# ==={ open up the resolv.conf file }===
+sudo vim /etc/resolv.conf
+# ==={ add in the localhost address as your first nameserver }===
+search lab-test.local
+nameserver 127.0.0.1
+nameserver 8.8.8.8
+nameserver 8.8.4.4
+# ==={ restart the dnsmasq service }===
+$ sudo systemctl restart dnsmasq.service
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Right, let&amp;rsquo;s check our DNS again:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ host 10.90.0.5
+5.0.0.10.in-addr.arpa domain name pointer oVirt-01.lab-test.local.
+
+$ host oVirt-01
+oVirt-01.lab-test.local has address 10.0.0.5
+oVirt-01.lab-test.local mail is handled by 10 your-dns-needs-immediate-attention.dev.
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Excellent, success!&lt;/p&gt;
+
+&lt;p&gt;I have to admit that the next bit concerning firewall settings I don&amp;rsquo;t fully understand, it has been added to my &lt;em&gt;&amp;lsquo;Things to research and understand&amp;rsquo;&lt;/em&gt; list.  But, this is what I did so I&amp;rsquo;ll add it here.  For those more knowledgeable than myself, please feel free to enlighten/correct me.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;# ==={ this stops the firewalld service to use iptables instead }===
+$ sudo systemctl mask firewalld.service
+$ sudo systemctl stop firewalld
+$ sudo yum install iptables-services
+$ systemctl enable iptables
+$ systemctl start iptables
+
+# ==={ a quick check of iptables }===
+$ sudo iptables -L
+Chain INPUT (policy ACCEPT)
+target     prot opt source               destination
+
+Chain FORWARD (policy ACCEPT)
+target     prot opt source               destination
+
+Chain OUTPUT (policy ACCEPT)
+target     prot opt source               destination
+
+# ==={ add in the iptables line suggested by oVirt }===
+$ sudo iptables -A INPUT -m state --state NEW -m udp -p udp --dport 53 -j ACCEPT
+# ==={ and check iptables again }===
+$ sudo iptables -L
+Chain INPUT (policy ACCEPT)
+target     prot opt source               destination
+ACCEPT     udp  --  anywhere             anywhere             state NEW udp dpt:domain
+
+Chain FORWARD (policy ACCEPT)
+target     prot opt source               destination
+
+Chain OUTPUT (policy ACCEPT)
+target     prot opt source               destination
+
+# ==={ save the iptables configuration }===
+$ sudo iptables-save
+# Generated by iptables-save v1.4.21 on Thu Apr  9 16:58:37 2015
+*filter
+:INPUT ACCEPT [102:8210]
+:FORWARD ACCEPT [0:0]
+:OUTPUT ACCEPT [22:3728]
+-A INPUT -p udp -m state --state NEW -m udp --dport 53 -j ACCEPT
+COMMIT
+# Completed on Thu Apr  9 16:58:37 2015
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Again I don&amp;rsquo;t fully understand the next configuration concerning Network Manager.  I was aware of it reading Jason Brooks &lt;a href=&#34;http://blog.jebpages.com/archives/up-and-running-with-ovirt-3-1-edition/&#34;&gt;excellent oVirt documentation&lt;/a&gt; but not knowing why it was done, I actually didn&amp;rsquo;t do it initially.  My oVirt setup failed and so I added it in and the setup worked, so it obviously does something! *(Yep, added to the &lt;strong&gt;&amp;lsquo;Things to research and understand&amp;rsquo;&lt;/strong&gt; list!)*&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ sudo systemctl stop NetworkManager.service
+$ sudo systemctl mask NetworkManager.service
+ln -s &#39;/dev/null&#39; &#39;/etc/systemd/system/NetworkManager.service&#39;
+$ sudo service network start
+Starting network (via systemctl):                                                       [  OK  ]
+$ sudo chkconfig network on
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;And on to installing oVirt.  By the way, I&amp;rsquo;m just installing the All-in-One, on a single server, and pretty much accepting all the defaults.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ sudo yum localinstall http://resources.ovirt.org/pub/yum-repo/ovirt-release35.rpm
+
+$ sudo yum install -y ovirt-engine-setup-plugin-allinone
+
+$ sudo engine-setup
+
+
+[ INFO  ] Stage: Initializing
+[ INFO  ] Stage: Environment setup
+          Configuration files: [&#39;/etc/ovirt-engine-setup.conf.d/10-packaging-aio.conf&#39;, &#39;/etc/ovirt-engine-setup.conf.d/10-packaging-jboss.conf&#39;, &#39;/etc/ovirt-engine-setup.conf.d/10-packaging.conf&#39;]
+          Log file: /var/log/ovirt-engine/setup/ovirt-engine-setup-20150409170730-i9jy0f.log
+          Version: otopi-1.3.1 (otopi-1.3.1-1.el7)
+[ INFO  ] Hardware supports virtualization
+[ INFO  ] Stage: Environment packages setup
+[ INFO  ] Stage: Programs detection
+[ INFO  ] Stage: Environment setup
+[ INFO  ] Stage: Environment customization
+
+          --== PRODUCT OPTIONS ==--
+
+          Configure Engine on this host (Yes, No) [Yes]:
+          Configure WebSocket Proxy on this host (Yes, No) [Yes]:
+
+          --== PACKAGES ==--
+
+[ INFO  ] Checking for product updates...
+[ INFO  ] No product updates found
+
+          --== ALL IN ONE CONFIGURATION ==--
+# ==={ It&#39;s important to answer Yes to this next question if you&#39;re setting up the oVirt-engine node to also run VMs }===
+          Configure VDSM on this host? (Yes, No) [No]: Yes
+          Local storage domain path [/var/lib/images]:
+          Local storage domain name [local_storage]:
+
+          --== NETWORK CONFIGURATION ==--
+
+          Host fully qualified DNS name of this server [oVirt-01.lab-test.local]:
+
+          --== DATABASE CONFIGURATION ==--
+
+          Where is the Engine database located? (Local, Remote) [Local]:
+          Setup can configure the local postgresql server automatically for the engine to run. This may conflict with existing applications.
+          Would you like Setup to automatically configure postgresql and create Engine database, or prefer to perform that manually? (Automatic, Manual) [Automatic]:
+
+          --== OVIRT ENGINE CONFIGURATION ==--
+
+          Engine admin password:
+          Confirm engine admin password:
+          Application mode (Virt, Gluster, Both) [Both]:
+
+          --== PKI CONFIGURATION ==--
+
+          Organization name for certificate [ab-testing.dev]:
+
+          --== APACHE CONFIGURATION ==--
+
+          Setup can configure the default page of the web server to present the application home page. This may conflict with existing applications.
+          Do you wish to set the application as the default page of the web server? (Yes, No) [Yes]:
+          Setup can configure apache to use SSL using a certificate issued from the internal CA.
+          Do you wish Setup to configure that, or prefer to perform that manually? (Automatic, Manual) [Automatic]:
+
+          --== SYSTEM CONFIGURATION ==--
+
+          Configure an NFS share on this server to be used as an ISO Domain? (Yes, No) [Yes]:
+          Local ISO domain path [/var/lib/exports/iso]:
+          Local ISO domain ACL - note that the default will restrict access to oVirt-01.lab-test.local only, for security reasons [oVirt-01.lab-test.local(rw)]:
+          Local ISO domain name [ISO_DOMAIN]:
+
+          --== MISC CONFIGURATION ==--
+
+
+          --== END OF CONFIGURATION ==--
+
+[ INFO  ] Stage: Setup validation
+[WARNING] Less than 16384MB of memory is available
+
+          --== CONFIGURATION PREVIEW ==--
+
+          Application mode                        : both
+          Update Firewall                         : False
+          Host FQDN                               : oVirt-01.lab-test.local
+          Engine database name                    : engine
+          Engine database secured connection      : False
+          Engine database host                    : localhost
+          Engine database user name               : engine
+          Engine database host name validation    : False
+          Engine database port                    : 5432
+          Engine installation                     : True
+          NFS setup                               : True
+          PKI organization                        : lab-test.local
+          NFS mount point                         : /var/lib/exports/iso
+          NFS export ACL                          : oVirt-01.lab-test.local(rw)
+          Configure VDSM on this host             : True
+          Local storage domain directory          : /var/lib/images
+          Configure local Engine database         : True
+          Set application as default page         : True
+          Configure Apache SSL                    : True
+          Configure WebSocket Proxy               : True
+          Engine Host FQDN                        : oVirt-01.lab-test.local
+
+          Please confirm installation settings (OK, Cancel) [OK]:
+[ INFO  ] Stage: Transaction setup
+[ INFO  ] Stopping engine service
+[ INFO  ] Stopping ovirt-fence-kdump-listener service
+[ INFO  ] Stopping websocket-proxy service
+[ INFO  ] Stage: Misc configuration
+[ INFO  ] Stage: Package installation
+[ INFO  ] Stage: Misc configuration
+[ INFO  ] Initializing PostgreSQL
+[ INFO  ] Creating PostgreSQL &#39;engine&#39; database
+[ INFO  ] Configuring PostgreSQL
+[ INFO  ] Creating/refreshing Engine database schema
+[ INFO  ] Creating CA
+[ INFO  ] Configuring WebSocket Proxy
+[ INFO  ] Generating post install configuration file &#39;/etc/ovirt-engine-setup.conf.d/20-setup-ovirt-post.conf&#39;
+[ INFO  ] Stage: Transaction commit
+[ INFO  ] Stage: Closing up
+[ INFO  ] Restarting nfs services
+[ ERROR ] Failed to execute stage &#39;Closing up&#39;: Command &#39;/bin/systemctl&#39; failed to execute
+[ INFO  ] Stage: Clean up
+          Log file is located at /var/log/ovirt-engine/setup/ovirt-engine-setup-20150409170730-i9jy0f.log
+[ INFO  ] Generating answer file &#39;/var/lib/ovirt-engine/setup/answers/20150409171042-setup.conf&#39;
+[ INFO  ] Stage: Pre-termination
+[ INFO  ] Stage: Termination
+[ ERROR ] Execution of setup failed
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This is when I configured NetworkManager, and started again:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ sudo engine-cleanup
+$ sudo engine-setup
+[ INFO  ] Stage: Initializing
+[ INFO  ] Stage: Environment setup
+          Configuration files: [&#39;/etc/ovirt-engine-setup.conf.d/10-packaging-aio.conf&#39;, &#39;/etc/ovirt-engine-setup.conf.d/10-packaging-jboss.conf&#39;, &#39;/etc/ovirt-engine-setup.conf.d/10-packaging.conf&#39;, &#39;/etc/ovirt-engine-setup.conf.d/20-setup-aio.conf&#39;, &#39;/etc/ovirt-engine-setup.conf.d/20-setup-ovirt-post.conf&#39;]
+          Log file: /var/log/ovirt-engine/setup/ovirt-engine-setup-20150409171624-ry3uj4.log
+          Version: otopi-1.3.1 (otopi-1.3.1-1.el7)
+[ INFO  ] Stage: Environment packages setup
+[ INFO  ] Stage: Programs detection
+[ INFO  ] Stage: Environment setup
+[ INFO  ] Stage: Environment customization
+
+          --== PRODUCT OPTIONS ==--
+
+
+          --== PACKAGES ==--
+
+[ INFO  ] Checking for product updates...
+[ INFO  ] No product updates found
+
+          --== ALL IN ONE CONFIGURATION ==--
+
+
+          --== NETWORK CONFIGURATION ==--
+
+
+          --== DATABASE CONFIGURATION ==--
+
+
+          --== OVIRT ENGINE CONFIGURATION ==--
+
+          Skipping storing options as database already prepared
+
+          --== PKI CONFIGURATION ==--
+
+
+          --== APACHE CONFIGURATION ==--
+
+
+          --== SYSTEM CONFIGURATION ==--
+
+
+          --== MISC CONFIGURATION ==--
+
+
+          --== END OF CONFIGURATION ==--
+
+[ INFO  ] Stage: Setup validation
+[WARNING] Less than 16384MB of memory is available
+[ INFO  ] Cleaning stale zombie tasks
+
+          --== CONFIGURATION PREVIEW ==--
+
+          Update Firewall                         : False
+          Host FQDN                               : oVirt-01.lab-test.local
+          Engine database name                    : engine
+          Engine database secured connection      : False
+          Engine database host                    : localhost
+          Engine database user name               : engine
+          Engine database host name validation    : False
+          Engine database port                    : 5432
+          Engine installation                     : True
+          NFS mount point                         : /var/lib/exports/iso
+          Configure WebSocket Proxy               : True
+          Engine Host FQDN                        : oVirt-01.lab-test.local
+
+          Please confirm installation settings (OK, Cancel) [OK]:
+[ INFO  ] Cleaning async tasks and compensations
+[ INFO  ] Checking the Engine database consistency
+[ INFO  ] Stage: Transaction setup
+[ INFO  ] Stopping engine service
+[ INFO  ] Stopping ovirt-fence-kdump-listener service
+[ INFO  ] Stopping websocket-proxy service
+[ INFO  ] Stage: Misc configuration
+[ INFO  ] Stage: Package installation
+[ INFO  ] Stage: Misc configuration
+[ INFO  ] Backing up database localhost:engine to &#39;/var/lib/ovirt-engine/backups/engine-20150409171646.q2VAjg.dump&#39;.
+[ INFO  ] Creating/refreshing Engine database schema
+[ INFO  ] Configuring WebSocket Proxy
+[ INFO  ] Generating post install configuration file &#39;/etc/ovirt-engine-setup.conf.d/20-setup-ovirt-post.conf&#39;
+[ INFO  ] Stage: Transaction commit
+[ INFO  ] Stage: Closing up
+
+          --== SUMMARY ==--
+
+[WARNING] Less than 16384MB of memory is available
+          SSH fingerprint: D4:A0:EB:C5:5F:20:2D:74:B0:0B:D6:4D:27:22:45:58
+          Internal CA C5:6C:90:54:4E:B6:0B:1F:AC:B0:81:42:17:F6:01:48:45:57:9E:12
+          Web access is enabled at:
+              http://oVirt-01.lab-test.local:80/ovirt-engine
+              https://oVirt-01.lab-test.local:443/ovirt-engine
+          In order to configure firewalld, copy the files from
+              /etc/ovirt-engine/firewalld to /etc/firewalld/services
+              and execute the following commands:
+              firewall-cmd -service ovirt-postgres
+              firewall-cmd -service ovirt-https
+              firewall-cmd -service ovirt-fence-kdump-listener
+              firewall-cmd -service ovirt-websocket-proxy
+              firewall-cmd -service ovirt-nfs
+              firewall-cmd -service ovirt-http
+          The following network ports should be opened:
+              tcp:111
+              tcp:2049
+              tcp:32803
+              tcp:443
+              tcp:5432
+              tcp:6100
+              tcp:662
+              tcp:80
+              tcp:875
+              tcp:892
+              udp:111
+              udp:32769
+              udp:662
+              udp:7410
+              udp:875
+              udp:892
+          An example of the required configuration for iptables can be found at:
+              /etc/ovirt-engine/iptables.example
+
+          --== END OF SUMMARY ==--
+
+[ INFO  ] Starting engine service
+[ INFO  ] Restarting httpd
+[ INFO  ] Stage: Clean up
+          Log file is located at /var/log/ovirt-engine/setup/ovirt-engine-setup-20150409171624-ry3uj4.log
+[ INFO  ] Generating answer file &#39;/var/lib/ovirt-engine/setup/answers/20150409171724-setup.conf&#39;
+[ INFO  ] Stage: Pre-termination
+[ INFO  ] Stage: Termination
+[ INFO  ] Execution of setup completed successfully
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;A look at the iptables configuration:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ sudo vim /etc/sysconfig/iptables
+=====
+# oVirt default firewall configuration. Automatically generated by vdsm bootstrap script.
+*filter
+:INPUT ACCEPT [0:0]
+:FORWARD ACCEPT [0:0]
+:OUTPUT ACCEPT [10765:598664]
+-A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
+-A INPUT -p icmp -j ACCEPT
+-A INPUT -i lo -j ACCEPT
+# vdsm
+-A INPUT -p tcp --dport 54321 -j ACCEPT
+# SSH
+-A INPUT -p tcp --dport 22 -j ACCEPT
+# snmp
+-A INPUT -p udp --dport 161 -j ACCEPT
+# DNS
+-A INPUT -m state --state NEW -m udp -p udp --dport 53 -j ACCEPT
+
+# libvirt tls
+-A INPUT -p tcp --dport 16514 -j ACCEPT
+
+# guest consoles
+-A INPUT -p tcp -m multiport --dports 5900:6923 -j ACCEPT
+-A INPUT -p tcp -m multiport --dports 5634:6166 -j ACCEPT
+
+# migration
+-A INPUT -p tcp -m multiport --dports 49152:49216 -j ACCEPT
+-A INPUT -p tcp -m state --state NEW
+
+# Reject any other input traffic
+-A INPUT -j REJECT --reject-with icmp-host-prohibited
+-A FORWARD -m physdev ! --physdev-is-bridged -j REJECT --reject-with icmp-host-prohibited
+COMMIT
+~
+~
+~
+~
+~
+~
+&amp;quot;/etc/sysconfig/iptables&amp;quot; 33L, 969C
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Let&amp;rsquo;s visit the server in a web browser; &lt;a href=&#34;http://oVirt-01.lab-test.local:80/ovirt-engine&#34;&gt;http://oVirt-01.lab-test.local:80/ovirt-engine&lt;/a&gt; sign in using username &lt;em&gt;admin&lt;/em&gt; and the password configured during setup and there we have our oVirt management portal:&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;{{ site.url }}/images/ovirt-mgmt-portal1.png&#34; alt=&#34;oVirt screenshot&#34; /&gt;&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Introducing my brother to Git</title>
+      <link>/post/2015/2015-04-02-git-for-my-brother-intro/</link>
+      <pubDate>Thu, 02 Apr 2015 00:00:00 +0000</pubDate>
+      
+      <guid>/post/2015/2015-04-02-git-for-my-brother-intro/</guid>
+      <description>&lt;p&gt;I recently bought a &lt;a href=&#34;http://goo.gl/VFZV5v&#34;&gt;book on Git&lt;/a&gt; Version Control, and my brother and girlfriend both looked at me weirdly and asked why I had bought a book on how to be a git.  Har-de-har-har.  I started trying to explain what it actually was, and my &lt;a href=&#34;http://cargocollective.com/richardjamesphoenix/About&#34;&gt;brother&lt;/a&gt; was kinda interested.  So, this is an attempt to explain it to him, in order to better understand it myself.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;What is Git?&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://git-scm.herokuapp.com/&#34;&gt;Git&lt;/a&gt; is a &lt;em&gt;Distributed Version Control System&lt;/em&gt; created to keep track of the building and development of the core &lt;a href=&#34;http://www.linux.com/&#34;&gt;Linux&lt;/a&gt; operating system.  It&amp;rsquo;s used to reliably manage changes made to a project and keep an accurate record of the evolution of the project.  &lt;em&gt;Git&lt;/em&gt; is used mainly with programming &lt;a href=&#34;http://www.linfo.org/source_code.html&#34;&gt;source code&lt;/a&gt;, but it can also be used with a variety of files, mainly text, you might want to manipulate and track over time.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Oh right, so what&amp;rsquo;s version control, then?&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;Yeah, okay, it still sounds a bit like an obscure programmer&amp;rsquo;s tool, right?  Version control is pretty much what it sounds like, it&amp;rsquo;s a method for managing the state of a project, through controlling the different versions created when changes are made to it.  Here&amp;rsquo;s a project you&amp;rsquo;re working on:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;You create a file and name it: &lt;code&gt;filename&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;You change the file, add content to it, delete content from it, and create a new file with a similar but different name to differentiate it from, but associate it with, the original file: &lt;code&gt;filename-VERSION 2&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;You try something different to a section of the file, a &lt;em&gt;wild idea&lt;/em&gt; that you&amp;rsquo;re not sure you want to continue with, and create another new, similar but slightly different, file: &lt;code&gt;filename-VERSION 2b&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;You do some more work on the original file, without the &lt;em&gt;wild idea&lt;/em&gt; in it, and when you&amp;rsquo;re done create another file with a different name, so you know it has the most recent changes in it: &lt;code&gt;filename-VERSION 3&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;You ask your friend to read through what you&amp;rsquo;ve done. They send back a file with their idea/viewpoint/error checking in it, renamed so you know it&amp;rsquo;s different to your original file: &lt;code&gt;filename-VERSION 3-James&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;Meanwhile, you continue with your previous &lt;em&gt;wild idea&lt;/em&gt;, saving an updated version of it: &lt;code&gt;filename-VERSION 2c&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;You like your &lt;em&gt;wild idea&lt;/em&gt; and keep it in the file, so now it&amp;rsquo;s part of the main, original file: &lt;code&gt;filename-VERSION 3c&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;You get round to making changes based on your friend/colleague&amp;rsquo;s suggestions: &lt;code&gt;filename-VERSION 3c-updated&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;You realise your &lt;em&gt;wild idea&lt;/em&gt; is actually rubbish and discard it: &lt;code&gt;filename-VERSION 4-LATEST&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;So now you have a project folder with these files in:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;filename&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;filename-VERSION 2&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;filename-VERSION 2b&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;filename-VERSION 2c&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;filename-VERSION 3&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;filename-VERSION 3c&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;filename-VERSION 3c-updated&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;filename-VERSION 3-James&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;filename-VERSION 4-LATEST&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;All of which are basically the same file with changes made to it.  And to be honest you&amp;rsquo;re not entirely sure if that last file has both the suggestions from your friend in it and the most recent changes and not the &lt;em&gt;wild idea&lt;/em&gt; still in there.  I&amp;rsquo;ve certainly been there before, and it&amp;rsquo;s a messy uncertain experience.  Add to this further collaboration with other project members and you&amp;rsquo;ve got a situation where no-one knows for sure if they&amp;rsquo;re working on the most recent up-to-date version of the project files.&lt;/p&gt;
+
+&lt;p&gt;Arrrghhh &lt;em&gt;CATASTROPHE!&lt;/em&gt;&lt;/p&gt;
+
+&lt;p&gt;With a version control system like &lt;em&gt;Git&lt;/em&gt; you don&amp;rsquo;t have to worry about creating a confusing jumble of filenames.  &lt;em&gt;Git&lt;/em&gt; allows you to just concentrate on your project and all the content within it.  &lt;em&gt;Git&lt;/em&gt; takes care of which version of the file you&amp;rsquo;re working on, logs the history of the changes that have been made, enables you to try &lt;em&gt;wild ideas&lt;/em&gt; without buggering up the original file, revert to previous versions and collaborate easily with others.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Okay, I understand that, but I don&amp;rsquo;t understand what Git actually is &amp;hellip; like is it a standalone program?&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;Well, kinda, but it&amp;rsquo;s more of a system than a program. Once &lt;em&gt;Git&lt;/em&gt; is installed you&amp;rsquo;ll have access to a set of instructions you can use in the &lt;a href=&#34;https://en.wikipedia.org/wiki/Command-line_interface&#34;&gt;command line/terminal&lt;/a&gt; of your computer.&lt;/p&gt;
+
+&lt;p&gt;Here, let me show you.  In the &lt;em&gt;Git&lt;/em&gt; command line on Windows I&amp;rsquo;m going to start a new project, in a folder called &lt;code&gt;git-formybrother&lt;/code&gt;, that contains a single file called &lt;code&gt;test-file.txt&lt;/code&gt;.  Here, the &lt;code&gt;$&lt;/code&gt; is a command prompt, where the instructions to the computer are typed.&lt;/p&gt;
+
+&lt;p&gt;{% highlight bash linenos %}
+Welcome to Git (version 1.9.5-preview20141217)&lt;/p&gt;
+
+&lt;p&gt;Run &amp;lsquo;git help git&amp;rsquo; to display the help index.
+Run &amp;lsquo;git help &lt;command&gt;&amp;rsquo; to display help for specific commands.&lt;/p&gt;
+
+&lt;p&gt;$ git init  # Initialise the Git repository
+Initialized empty Git repository in C:/git-formybrother/.git/&lt;/p&gt;
+
+&lt;p&gt;$ ls  # List the contents of the folder/repository
+test-file.txt&lt;/p&gt;
+
+&lt;p&gt;$ git status  # Check the status of the Git repository
+On branch master&lt;/p&gt;
+
+&lt;p&gt;Initial commit&lt;/p&gt;
+
+&lt;p&gt;Untracked files:
+  (use &amp;ldquo;git add &lt;file&gt;&amp;hellip;&amp;rdquo; to include in what will be committed)&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;    test-file.txt
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;nothing added to commit but untracked files present (use &amp;ldquo;git add&amp;rdquo; to track)&lt;/p&gt;
+
+&lt;p&gt;$ git add test-file.txt  # Add test-file.txt to Git to be tracked&lt;/p&gt;
+
+&lt;p&gt;$ git commit -am &amp;ldquo;started new project&amp;rdquo;  #  Commit the current state of the files, with a short message, to your Git history
+[master (root-commit) 3110c11] started new project
+ 1 file changed, 0 insertions(+), 0 deletions(-)
+ create mode 100644 test-file.txt&lt;/p&gt;
+
+&lt;p&gt;$ git status  # Check again the status of the Git repository
+On branch master
+nothing to commit, working directory clean
+{% endhighlight %}&lt;/p&gt;
+
+&lt;p&gt;So basically, we&amp;rsquo;ve just started a new project to be tracked by &lt;em&gt;Git&lt;/em&gt;, added a file to it and commited/saved the state of the project to the &lt;em&gt;Git&lt;/em&gt; log.&lt;/p&gt;
+
+&lt;p&gt;I realise not everyone is comfortable on the command line and this can scare them away, but there are a number of different graphical user interfaces &lt;a href=&#34;https://www.git-scm.com/downloads/guis&#34;&gt;(GUIs)&lt;/a&gt;, that can make it easier to deal with, and show a nice visual representation of your project, it&amp;rsquo;s development and the changes made to it.  This in itself can provide an incredibly useful overview of what&amp;rsquo;s going on in your project. Here&amp;rsquo;s our new project in the &lt;em&gt;Github for Windows&lt;/em&gt; client:&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;{{ site.url }}/images/gfmb01-github-for-windows.png&#34; alt=&#34;Github for Windows screenshot&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Okay, but I&amp;rsquo;m not a software developer, do I really care?  Can I really be bothered?&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;I&amp;rsquo;m not gonna lie, it&amp;rsquo;s great but it&amp;rsquo;s not magic, there&amp;rsquo;s a learning curve involved, and to be honest I don&amp;rsquo;t know if it&amp;rsquo;s a sensible way of managing more complicated files like &lt;a href=&#34;http://blog.martinfenner.org/2014/08/25/using-microsoft-word-with-git/&#34;&gt;MS Office files&lt;/a&gt;, but you should avoid MS Office anyway.  Even so, once you get the basics you&amp;rsquo;ll be creating and maintaining cleaner, clearer projects with more structure and accountability.  Have a go &lt;a href=&#34;https://try.github.io/levels/1/challenges/1&#34;&gt;here&lt;/a&gt;, see what you think&amp;hellip;&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Notes on Python: Lists</title>
+      <link>/post/2015/03/the-python-list/</link>
       <pubDate>Tue, 31 Mar 2015 00:00:00 +0000</pubDate>
       
-      <guid>/post/2015/2015-03-31-the-python-list/</guid>
+      <guid>/post/2015/03/the-python-list/</guid>
       <description>&lt;p&gt;Like the numerable daily lists made with pen and paper, the list in Python is an incredibly handy way to store information, but with extra &lt;em&gt;power&lt;/em&gt;.&lt;/p&gt;
 
 &lt;p&gt;We can start with an empty list:&lt;/p&gt;

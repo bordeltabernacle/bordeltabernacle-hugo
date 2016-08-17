@@ -1,10 +1,9 @@
-+++
-date = "2015-03-31"
-title = "The Python List"
-tags = [ "python" ]
-
-+++
-
+---
+layout: post
+title:  "Notes on Python: Lists"
+date:   2015-03-31
+tags:   python
+---
 Like the numerable daily lists made with pen and paper, the list in Python is an incredibly handy way to store information, but with extra *power*.
 
 <!--more-->

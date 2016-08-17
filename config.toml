@@ -2,6 +2,7 @@ baseurl = "/"
 languageCode = "en-gb"
 title = "bordeltabernacle"
 newContentEditor = "nvim"
+theme = "crisp"
 
 [Params]
 
