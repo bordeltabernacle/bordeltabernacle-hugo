@@ -1,8 +1,7 @@
 ---
-layout: post
 title: "Notes on Elixir: Bodyless Function Clauses"
-tags: elixir
-
+date: 2016-01-13
+tags: [ "elixir" ]
 ---
 
 ```elixir

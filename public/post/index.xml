@@ -414,10 +414,10 @@ PLAY RECAP *********************************************************************
     
     <item>
       <title>Using Vagrant to set up an Ansible Environment</title>
-      <link>/post/2016-08-03-using-vagrant-set-up-ansible-environment/</link>
+      <link>/post/2016/08/using-vagrant-set-up-ansible-environment/</link>
       <pubDate>Wed, 03 Aug 2016 00:00:00 +0000</pubDate>
       
-      <guid>/post/2016-08-03-using-vagrant-set-up-ansible-environment/</guid>
+      <guid>/post/2016/08/using-vagrant-set-up-ansible-environment/</guid>
       <description>&lt;p&gt;Vagrant is a tool for creating, managing and sharing Virtual Machines. It&amp;rsquo;s
 really helpful for creating contained environments with specific requirements
 that can be easily built up, tore down and shared with others. It&amp;rsquo;s especially
@@ -776,41 +776,880 @@ with no documentation, but &lt;a href=&#34;https://github.com/bordeltabernacle/a
     </item>
     
     <item>
+      <title>Starting out with Ansible, Cisco and Network Automation</title>
+      <link>/post/2016/08/starting-out-with-ansible-cisco-and-network-automation/</link>
+      <pubDate>Mon, 01 Aug 2016 00:00:00 +0000</pubDate>
+      
+      <guid>/post/2016/08/starting-out-with-ansible-cisco-and-network-automation/</guid>
+      <description>&lt;p&gt;Recently I&amp;rsquo;ve been spending more time exploring network automation, using
+homegrown scripts, Cisco&amp;rsquo;s APIC-EM, and Ansible. I like Ansible, and since
+release 2.1, they&amp;rsquo;ve started including dedicated networking modules, which is
+great. I&amp;rsquo;ve only scratched the surface of Ansible, but I&amp;rsquo;ve already had great
+success with it in the lab. So, let&amp;rsquo;s get it set up and doing our work for us,
+yeah?&lt;/p&gt;
+
+&lt;p&gt;Ansible requires Python 2, and doesn&amp;rsquo;t support Python 3. It also doesn&amp;rsquo;t work
+with Windows as the control machine. So I&amp;rsquo;m going to install Ansible on an Ubuntu
+14.04 virtual machine, though you could do the same on the more recent Ubuntu
+16.04 as well.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;sudo apt-get install software-properties-common
+sudo apt-add-repository ppa:ansible/ansible
+sudo apt-get -y update
+sudo apt-get -y install ansible
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;If that all goes well, typing in &lt;code&gt;ansible --version&lt;/code&gt; should show the following
+output:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;ansible 2.1.0.0
+  config file = /etc/ansible/ansible.cfg
+  configured module search path = Default w/o overrides
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The first thing we need to do is specify our target devices that we want to
+connect to. This is done using an inventory file. In my lab I have 3 Cisco
+2921 routers, each with a minimal configuration, enough to ssh to.  So,
+hostname, username/secret, ip domain name, and ssh crypto.
+These are hooked up to a Cisco switch with no config on, and
+then my laptop is connected by ethernet, with a static ip address on
+the same &lt;code&gt;192.168.0.0/24&lt;/code&gt; network, so my Ansible VM will just get NAT&amp;rsquo;d through
+this address. Pretty basic, but enough for these purposes.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;{{ site.url }}/images/IMAG0131.jpg&#34; alt=&#34;routers&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;So, in a directory created for this Ansible project, I&amp;rsquo;ve created a file
+called &lt;em&gt;hosts&lt;/em&gt;, without a file extension. As far as I understand, this file can
+be called anything, and can have a file extension if it makes your life easier,
+but convention has it named &lt;em&gt;hosts&lt;/em&gt;, or sometimes &lt;em&gt;inventory&lt;/em&gt;, and the contents
+have to be in an INI format. This is where we&amp;rsquo;re going to list our hosts. My
+hosts file contains my 3 2921 routers and looks like so:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-ini&#34;&gt;[routers]
+router-one ansible_host=192.168.0.1
+router-two ansible_host=192.168.0.2
+router-three ansible_host=192.168.0.3
+
+[routers:vars]
+ansible_user=vagrant
+ansible_password=vagrant
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Here, I have a group called &lt;code&gt;routers&lt;/code&gt; that lists each host&amp;rsquo;s name,
+followed by the &lt;code&gt;ansible_host&lt;/code&gt; variable, which is the ip address of the host.
+Below that are listed a couple of variables for every host in the &lt;code&gt;routers&lt;/code&gt;
+group, under the heading &lt;code&gt;[routers:vars]&lt;/code&gt;; &lt;code&gt;ansible_user&lt;/code&gt; is the username on
+the host, and &lt;code&gt;ansible_password&lt;/code&gt; is the password on the device, these correspond
+with this configuration on each router:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-text&#34;&gt;username vagrant privilege 15 secret 5 $1$lGlV$sF4MKyPYZlteNVgGHo9tL1
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;We can now use the &lt;code&gt;ansible&lt;/code&gt; command line client to interact with our routers.
+Most Ansible guides deal with servers, and start off by using the Ansible &lt;code&gt;ping&lt;/code&gt;
+module. We can&amp;rsquo;t do that here. Like most Ansible modules, the &lt;code&gt;ping&lt;/code&gt; module
+works by bundling up some Python code, which it delivers to the device via SSH
+and executes. We can&amp;rsquo;t run Python code on our Cisco routers, so we&amp;rsquo;ll take a
+different approach to get started.&lt;/p&gt;
+
+&lt;p&gt;The raw module &lt;em&gt;&amp;lsquo;executes a low-down and dirty SSH command&amp;rsquo;&lt;/em&gt;, perfect.&lt;/p&gt;
+
+&lt;p&gt;So, let&amp;rsquo;s run the following comand:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;ansible all -m raw -a &amp;quot;executable=&#39;&#39; sh run | inc hostname&amp;quot; -i hosts
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;ansible&lt;/code&gt; is the command line client&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;all&lt;/code&gt; specifies we want to target all hosts in the hosts file, we
+could just as easily have used &lt;code&gt;routers&lt;/code&gt; to only target the routers group, if we
+had multiple groups&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;-m raw&lt;/code&gt; specifies the raw module&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;-a &amp;quot;executable=&#39;&#39; sh run | inc hostname&amp;quot;&lt;/code&gt; specifies the module&amp;rsquo;s arguments,
+the command we want to send; &lt;code&gt;sh run | inc hostname&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;-i hosts&lt;/code&gt; specifies the inventory file we want to use&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;And we get the following output:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;router-one | SUCCESS | rc=0 &amp;gt;&amp;gt;
+hostname router-one
+Connection to 192.168.0.1 closed by remote host.
+
+
+router-two | SUCCESS | rc=0 &amp;gt;&amp;gt;
+hostname router-two
+Connection to 192.168.0.2 closed by remote host.
+
+
+router-three | SUCCESS | rc=0 &amp;gt;&amp;gt;
+hostname router-three
+Connection to 192.168.0.3 closed by remote host.
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Success, excellent! We get back the hostname of each router, in a second or so.
+You may have noticed the command sent to the module includes &lt;code&gt;executable=&#39;&#39;&lt;/code&gt;,
+this is because the raw module is expecting to encounter bash on a server,
+rather than the IOS command line. If we run it without this we get the following
+error:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;router-three | SUCCESS | rc=0 &amp;gt;&amp;gt;
+Line has invalid autocommand &amp;quot;/bin/sh -c &#39;sh run | inc hostname &amp;amp;&amp;amp; sleep 0&#39;&amp;quot;Connection to 192.168.0.3 closed by remote host.
+
+
+router-one | SUCCESS | rc=0 &amp;gt;&amp;gt;
+Line has invalid autocommand &amp;quot;/bin/sh -c &#39;sh run | inc hostname &amp;amp;&amp;amp; sleep 0&#39;&amp;quot;
+
+router-two | SUCCESS | rc=0 &amp;gt;&amp;gt;
+Line has invalid autocommand &amp;quot;/bin/sh -c &#39;sh run | inc hostname &amp;amp;&amp;amp; sleep 0&#39;&amp;quot;Connection to 192.168.0.2 closed by remote host.
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;There was &lt;a href=&#34;https://github.com/ansible/ansible-modules-core/issues/3332&#34;&gt;an issue&lt;/a&gt;
+on the Ansible repo, so I&amp;rsquo;m not sure if this is something that will change in
+the future. Anyway, we won&amp;rsquo;t be using the &lt;code&gt;raw&lt;/code&gt; module much, so it doesn&amp;rsquo;t really matter.
+This is a quick way to get facts off your devices, and you can send configuration
+changes this way if you really want. It&amp;rsquo;s always worth messing around on a lab
+router that doesn&amp;rsquo;t support critical company infrastructure, if you can, but
+Ansible has a better way to design and implement repeatable tasks, called
+&lt;em&gt;Playbooks&lt;/em&gt;, which I&amp;rsquo;ll look at in another post.&lt;/p&gt;
+
+&lt;p&gt;Some further interesting sources of information:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&#34;https://www.ansible.com/webinars-training/automating-your-network&#34;&gt;Ansible Network Automation Webinar&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://pynet.twb-tech.com/blog/automation/cisco-ios.html&#34;&gt;Kirk Byers&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;http://jedelman.com/home/network-automation-with-ansible-dynamically-configuring-interface-descriptions/&#34;&gt;Jason Edelman&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://networklore.com/ansible-device-versions/&#34;&gt;Patrick Ogenstad&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://networkop.github.io/blog/2015/06/24/ansible-intro/&#34;&gt;Michael Kashin&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;http://packetpushers.net/ansible-cisco-snmp/&#34;&gt;Packet Pushers&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+    </item>
+    
+    <item>
       <title>Songs to Code to: Talk Is Cheap</title>
-      <link>/post/2016-07-26-chet-faker-talk-is-cheap/</link>
+      <link>/post/2016/07/chet-faker-talk-is-cheap/</link>
       <pubDate>Tue, 26 Jul 2016 00:00:00 +0000</pubDate>
       
-      <guid>/post/2016-07-26-chet-faker-talk-is-cheap/</guid>
+      <guid>/post/2016/07/chet-faker-talk-is-cheap/</guid>
       <description>&lt;iframe width=&#34;640&#34; height=&#34;360&#34; src=&#34;https://www.youtube.com/embed/aP_-P_BS6KY&#34; frameborder=&#34;0&#34;&gt; &lt;/iframe&gt;
 </description>
     </item>
     
     <item>
+      <title>Notes on Elixir: Templating with EEx</title>
+      <link>/post/2016/02/notes-on-elixir-templating-with-eex/</link>
+      <pubDate>Fri, 12 Feb 2016 00:00:00 +0000</pubDate>
+      
+      <guid>/post/2016/02/notes-on-elixir-templating-with-eex/</guid>
+      <description>&lt;p&gt;EEx is to Elixir what &lt;a href=&#34;http://jinja.pocoo.org/&#34;&gt;Jinja&lt;/a&gt; is to Python.  It enables the use of Elixir
+code inside strings and files.  It&amp;rsquo;s used extensively in the Phoenix framework for HTML
+templates, and recently I&amp;rsquo;ve started to use it to replace my Python scripts for generating
+Cisco config files.&lt;/p&gt;
+
+&lt;p&gt;Like most templating engines EEx has various tags it uses for marking up your
+template:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;&amp;lt;% content %&amp;gt;&lt;/code&gt; - Contains Elixir code, but won&amp;rsquo;t output anything to the template&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;&amp;lt;%= content %&amp;gt;&lt;/code&gt; - That extra &lt;code&gt;=&lt;/code&gt; in there means the result of any Elixir inside the tag
+will appear in the template.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;&amp;lt;%% content %&amp;gt;&lt;/code&gt; &amp;amp; &lt;code&gt;&amp;lt;%%= content %&amp;gt;&lt;/code&gt; - These are quotations, returning, rather
+than evaluating the contents.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;&amp;lt;%# content %&amp;gt;&lt;/code&gt; - Comments, discarded in evaluation.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;These tags, in the context of a template are evaluated by one of 4 functions, or
+2 macros:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;compile_file/2&lt;/code&gt; &amp;amp; &lt;code&gt;compile_string/2&lt;/code&gt; - These generate a &lt;em&gt;quoted expression&lt;/em&gt; from
+a file or a string respectively, essentially creating an Abstract Syntax Tree
+representation of the input.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;eval_file/3&lt;/code&gt; &amp;amp; &lt;code&gt;eval_string&lt;/code&gt; - Evaluate the given file or string respectively,
+generating output based on the given template and variable bindings.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;function_from_file/5&lt;/code&gt; &amp;amp; &lt;code&gt;function_from_string/5&lt;/code&gt; - These macros generate
+functions from the given file or string respectively, along with any arguments. These
+functions can then be used in other code to generate output from the given
+template and arguments.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;So, examples;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-elixir&#34;&gt;iex&amp;gt; string = &amp;quot;Hello, &amp;lt;%= name %&amp;gt;!&amp;quot;
+&amp;quot;Hello, &amp;lt;%= name %&amp;gt;!&amp;quot;
+iex&amp;gt; EEx.eval_string string, [name: &amp;quot;World&amp;quot;]
+&amp;quot;Hello, World!&amp;quot;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Here, &lt;code&gt;string&lt;/code&gt; is bound to a simple template, with a variable name inside the
+tag.  We then evaluate the string, passing in a keyword list of arguments, and
+hey presto, in our output the &lt;code&gt;name&lt;/code&gt; variable has been replaced! Not so
+different from string interpolation really. Except we have access to all of
+Elixir inside the tag;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-elixir&#34;&gt;iex&amp;gt; template = &amp;quot;&amp;lt;%= if n &amp;gt; 100 do %&amp;gt; \
+...&amp;gt; &amp;lt;%= n %&amp;gt; is greater than 100. \
+...&amp;gt; &amp;lt;% else %&amp;gt; \
+...&amp;gt; &amp;lt;%= n %&amp;gt; is lower than 100. \
+...&amp;gt; &amp;lt;% end %&amp;gt;&amp;quot;
+&amp;quot;&amp;lt;%= if n &amp;gt; 100 do %&amp;gt;n is greater than 100.&amp;lt;% else %&amp;gt;n is lower than 100.&amp;lt;% end %&amp;gt;&amp;quot;
+iex&amp;gt; EEx.eval_string template, [n: 10]
+&amp;quot; 10 is lower than 100. &amp;quot;
+iex&amp;gt; EEx.eval_string template, [n: 101]
+&amp;quot; 101 is greater than 100. &amp;quot;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Notice the &lt;code&gt;&amp;lt;% %&amp;gt;&lt;/code&gt; tags for the &lt;code&gt;else&lt;/code&gt; &amp;amp; &lt;code&gt;end&lt;/code&gt; of the &lt;code&gt;if&lt;/code&gt; statement. The
+content of these tags is evaluated, but never returned to the template. We&amp;rsquo;ll
+get a compiler warning if we include an unused variable in there, or an error if
+we have an unbound variable, otherwise any results just won&amp;rsquo;t appear in our
+final output;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-elixir&#34;&gt;iex&amp;gt; string = &amp;quot;Hello, &amp;lt;% name %&amp;gt;!&amp;quot;
+&amp;quot;Hello, &amp;lt;% name %&amp;gt;!&amp;quot;
+iex&amp;gt; EEx.eval_string string, [name: &amp;quot;World&amp;quot;]
+&amp;quot;Hello, !&amp;quot;
+nofile:1: warning: variable name in code block has no effect as it is never returned (remove the variable or assign it to _ to avoid warnings)
+iex&amp;gt; EEx.eval_string string
+** (CompileError) nofile:1: undefined function name/0
+    (elixir) expanding macro: Kernel.&amp;lt;&amp;gt;/2
+             nofile:1: (file)
+iex&amp;gt; string = &amp;quot;Hello, &amp;lt;% 2 + 2 %&amp;gt;!&amp;quot;
+iex&amp;gt; EEx.eval_string string
+&amp;quot;Hello, !&amp;quot;
+iex&amp;gt; string = &amp;quot;Hello, &amp;lt;%= 2 + 2 %&amp;gt;!&amp;quot;
+iex&amp;gt; EEx.eval_string string
+&amp;quot;Hello, 4!&amp;quot;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The quotation tag is interesting, it&amp;rsquo;s almost like a raw string indicator,
+telling EEx to not evaluate the tag.  I&amp;rsquo;ve not had cause to use it yet, but I
+can see it might be useful for some kind of two-stage templating;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-elixir&#34;&gt;iex&amp;gt; string = &amp;quot;Hello, &amp;lt;%% 2 + 2 %&amp;gt;!&amp;quot;
+&amp;quot;Hello, &amp;lt;%% 2 + 2 %&amp;gt;!&amp;quot;
+iex&amp;gt; EEx.eval_string string
+&amp;quot;Hello, &amp;lt;% 2 + 2 %&amp;gt;!&amp;quot;
+iex&amp;gt; string = &amp;quot;Hello, &amp;lt;%%= 2 + 2 %&amp;gt;!&amp;quot;
+&amp;quot;Hello, &amp;lt;%%= 2 + 2 %&amp;gt;!&amp;quot;
+iex&amp;gt; output = EEx.eval_string string
+&amp;quot;Hello, &amp;lt;%= 2 + 2 %&amp;gt;!&amp;quot;
+iex&amp;gt; EEx.eval_string output
+&amp;quot;Hello, 4!&amp;quot;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;When first evaluated the quotation tag becomes a regular tag, which can then be
+evaluated again if necessary.&lt;/p&gt;
+
+&lt;p&gt;So, we&amp;rsquo;ve seen &lt;code&gt;eval_string/2&lt;/code&gt; in the previous examples. &lt;code&gt;eval_file/2&lt;/code&gt; is much
+the same but takes a file as it&amp;rsquo;s template rather than a string;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-elixir&#34;&gt;iex&amp;gt; File.write(&amp;quot;example.txt&amp;quot;, &amp;quot;Hello, &amp;lt;%= name %&amp;gt;!&amp;quot;)
+:ok
+iex(52)&amp;gt; EEx.eval_file &amp;quot;example.txt&amp;quot;, [name: &amp;quot;World&amp;quot;]
+&amp;quot;Hello, World!&amp;quot;
+iex(53)&amp;gt; File.read(&amp;quot;example.txt&amp;quot;)
+{:ok, &amp;quot;Hello, &amp;lt;%= name %&amp;gt;!&amp;quot;}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Note that the original template file has not been changed, EEx has just created
+a new output from the combination of the template and the given variable
+bindings. Also, the template file here was just a &lt;code&gt;.txt&lt;/code&gt; file rather than a
+&lt;code&gt;.eex&lt;/code&gt; file. The template file isn&amp;rsquo;t required to be a &lt;code&gt;.eex&lt;/code&gt; file, but
+convention is to combine the two extensions, for instance &lt;code&gt;.txt.eex&lt;/code&gt; or
+&lt;code&gt;.html.eex&lt;/code&gt;, as this &lt;em&gt;&amp;lsquo;preserves its intent as a template, and also denotes what
+it&amp;rsquo;s outputting&amp;rsquo;&lt;/em&gt;, and helps with syntax highlighting too. (thanks asonge &amp;amp;
+ciastek)&lt;/p&gt;
+
+&lt;p&gt;The &lt;code&gt;compile_string/2&lt;/code&gt; &amp;amp; &lt;code&gt;compile_file/2&lt;/code&gt; functions are fairly straightforward,
+generating AST. I&amp;rsquo;ve had to put this in a gist, &lt;a href=&#34;https://gist.github.com/bordeltabernacle/24fec2e0d55b7937a0d5&#34;&gt;here&lt;/a&gt;, as it screws with
+Jekyll&amp;rsquo;s liquid tags, jeez!&lt;/p&gt;
+
+&lt;p&gt;Alhough I&amp;rsquo;ve had no use for them myself, they are actually used within the
+&lt;code&gt;eval_string/3&lt;/code&gt; &amp;amp; &lt;code&gt;eval_file/3&lt;/code&gt; functions.&lt;/p&gt;
+
+&lt;p&gt;Last, but by no means least, are the &lt;code&gt;function_from_file/5&lt;/code&gt; &amp;amp;
+&lt;code&gt;function_from_string/5&lt;/code&gt; macros. These basically do what they sound like they
+do; create a function from a file or string template for use elsewhere. I&amp;rsquo;ll
+illustrate this with an example.&lt;/p&gt;
+
+&lt;p&gt;Let&amp;rsquo;s say we have a very large number of devices that we need to generate
+individual configurations for, in my experience this would be for Cisco switches
+and routers.  We create a template, &amp;ldquo;base_example.conf.eex&amp;rdquo;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-elixir&#34;&gt;hostname &amp;lt;%= hostname %&amp;gt;
+no logging console
+username &amp;lt;%= user_name %&amp;gt; secret &amp;lt;%= user_password %&amp;gt;
+aaa new-model
+aaa authentication login default local
+clock timezone GMT 0 0
+clock summer-time BST recurring last Sun Mar 1:00 last Sun Oct 1:00
+ip name-server &amp;lt;%= name_server %&amp;gt;
+no ip http server
+no ip http secure-server
+ntp server &amp;lt;%= ntp_server %&amp;gt;
+ntp update-calendar
+!
+&amp;lt;%= for [id, name] &amp;lt;- vlans do %&amp;gt;
+vlan &amp;lt;%= id %&amp;gt;
+  name &amp;lt;%= name %&amp;gt;
+&amp;lt;% end %&amp;gt;
+!
+interface 0
+ip address &amp;lt;%= ip_address %&amp;gt;
+no shutdown
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This is a very basic template, with some tags expecting variables. There is also
+a list comprehension towards the end, this expects &lt;code&gt;vlans&lt;/code&gt; to be a list of 2
+element lists, that it will then map over, creating as many vlan/name pairs as
+necessary.  This is really useful for situations where you might have a variable
+amount of input data, saving you from having to adjust the template each time
+according to, in this case, the number of vlans.&lt;/p&gt;
+
+&lt;p&gt;So, I&amp;rsquo;ve saved this template in a &lt;em&gt;templates&lt;/em&gt; directory. Let&amp;rsquo;s dip into iex and
+see what we can do:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-elixir&#34;&gt;iex&amp;gt; defmodule Render do
+...&amp;gt;   require EEx
+...&amp;gt;   EEx.function_from_file(:def, :base,
+...&amp;gt;     Path.expand(&amp;quot;./templates/base_example.conf.eex&amp;quot;),
+...&amp;gt;     [:hostname, :ip_address, :name_server, :ntp_server,
+...&amp;gt;      :user_name, :user_password, :vlans])
+...&amp;gt; end
+{:module, Render,
+ &amp;lt;&amp;lt;70, 79, 82, 49, 0, 0, 14, 184, 66, 69, 65, 77, 69, 120, 68, 99, 0, 0, 1, 26, 131, 104, 2, 100, 0, 14, 101, 108, 105, 120, 105, 114, 95, 100, 111, 99, 115, 95, 118, 49, 108, 0, 0, 0, 4, 104, 2, ...&amp;gt;&amp;gt;,
+ {:base, 7}}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Here, we start a new module called Render, &lt;code&gt;require EEx&lt;/code&gt;, and then use the
+&lt;code&gt;function_from_file/5&lt;/code&gt; macro, passing it the type of function we want (&lt;code&gt;def&lt;/code&gt; or
+&lt;code&gt;defp&lt;/code&gt;), the name of the function, the template we&amp;rsquo;re using, and our arguments.&lt;/p&gt;
+
+&lt;p&gt;We now have a function we can use to render our template:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-elixir&#34;&gt;iex&amp;gt; Render.base(
+...&amp;gt;   &amp;quot;ABC20&amp;quot;,
+...&amp;gt;   &amp;quot;192.168.1.20&amp;quot;,
+...&amp;gt;   &amp;quot;8.8.8.8&amp;quot;,
+...&amp;gt;   &amp;quot;uk.pool.ntp.org&amp;quot;,
+...&amp;gt;   &amp;quot;admin&amp;quot;,
+...&amp;gt;   &amp;quot;password&amp;quot;,
+...&amp;gt;   [[&amp;quot;999&amp;quot;, &amp;quot;NATIVE&amp;quot;], [&amp;quot;100&amp;quot;, &amp;quot;VOICE&amp;quot;], [&amp;quot;101&amp;quot;, &amp;quot;DATA 1&amp;quot;], [&amp;quot;102&amp;quot;, &amp;quot;DATA 2&amp;quot;], [&amp;quot;103&amp;quot;, &amp;quot;DATA 3&amp;quot;]]
+...&amp;gt; )
+&amp;quot;hostname ABC20
+no logging console
+username admin secret password
+aaa new-model
+aaa authentication login default local
+clock timezone GMT 0 0
+clock summer-time BST recurring last Sun Mar 1:00 last Sun Oct 1:00
+ip name-server 8.8.8.8
+no ip http server
+no ip http secure-server
+ntp server uk.pool.ntp.org
+ntp update-calendar
+!
+vlan 999
+  name NATIVE
+
+vlan 100
+  name VOICE
+
+vlan 101
+  name DATA 1
+
+vlan 102
+  name DATA 2
+
+vlan 103
+  name DATA 3
+!
+interface 0
+ip address 192.168.1.20
+no shutdown&amp;quot;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;We pass our device variables in to our new function, notice the list of lists
+for &lt;code&gt;vlans&lt;/code&gt;, and out pops our rendered template, including all our vlans,
+lovely. Now, obviously, this isn&amp;rsquo;t particularly practical when dealing with
+thousands of devices. But what you have is a function you can use as part of a
+module that can read data from a csv file, I&amp;rsquo;ve found &lt;a href=&#34;https://github.com/CargoSense/ex_csv&#34;&gt;ex_csv&lt;/a&gt; to be pretty
+good for this, and map over it, applying your new rendering function, and then
+writing the results to a new file.&lt;/p&gt;
+
+&lt;p&gt;But there&amp;rsquo;s more. Passing in that list of data is pretty cumbersome, it&amp;rsquo;d be
+nice if we could just define a single variable that represents a map, and let
+the template grab what it needs from that. First, we need to change our template
+to look like this:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-elixir&#34;&gt;hostname &amp;lt;%= @hostname %&amp;gt;
+no logging console
+username &amp;lt;%= @user_name %&amp;gt; secret &amp;lt;%= @user_password %&amp;gt;
+aaa new-model
+aaa authentication login default local
+clock timezone GMT 0 0
+clock summer-time BST recurring last Sun Mar 1:00 last Sun Oct 1:00
+ip name-server &amp;lt;%= @name_server %&amp;gt;
+no ip http server
+no ip http secure-server
+ntp server &amp;lt;%= @ntp_server %&amp;gt;
+ntp update-calendar
+!
+&amp;lt;%= for [id, name] &amp;lt;- @vlans do %&amp;gt;
+vlan &amp;lt;%= id %&amp;gt;
+  name &amp;lt;%= name %&amp;gt;
+&amp;lt;% end %&amp;gt;
+!
+interface 0
+ip address &amp;lt;%= @ip_address %&amp;gt;
+no shutdown
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;We&amp;rsquo;re now using EEx&amp;rsquo;s &lt;code&gt;@&lt;/code&gt; macro, which enables us to grab data out of a map or
+keyword list.&lt;/p&gt;
+
+&lt;p&gt;We&amp;rsquo;ll update our &lt;code&gt;Render.base&lt;/code&gt; function, like so:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-elixir&#34;&gt;iex&amp;gt; defmodule Render do
+...&amp;gt;   require EEx
+...&amp;gt;   EEx.function_from_file(:def, :base,
+...&amp;gt;     Path.expand(&amp;quot;./templates/base_example.conf.eex&amp;quot;),
+...&amp;gt;     [:assigns])
+...&amp;gt; end
+iex: warning: redefining module Render
+{:module, Render,
+ &amp;lt;&amp;lt;70, 79, 82, 49, 0, 0, 15, 8, 66, 69, 65, 77, 69, 120, 68, 99, 0, 0, 0, 151, 131, 104, 2, 100, 0, 14, 101, 108, 105, 120, 105, 114, 95, 100, 111, 99, 115, 95, 118, 49, 108, 0, 0, 0, 4, 104, 2, ...&amp;gt;&amp;gt;,
+ {:base, 1}}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;and create a map of our data:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-elixir&#34;&gt;iex&amp;gt; device = %{hostname: &amp;quot;ABC20&amp;quot;,
+...&amp;gt;   ip_address: &amp;quot;192.168.1.20&amp;quot;,
+...&amp;gt;   name_server: &amp;quot;8.8.8.8&amp;quot;,
+...&amp;gt;   ntp_server: &amp;quot;uk.pool.ntp.org&amp;quot;,
+...&amp;gt;   user_name: &amp;quot;admin&amp;quot;,
+...&amp;gt;   user_password: &amp;quot;password&amp;quot;,
+...&amp;gt;   vlans: [[&amp;quot;999&amp;quot;, &amp;quot;NATIVE&amp;quot;], [&amp;quot;100&amp;quot;, &amp;quot;VOICE&amp;quot;], [&amp;quot;101&amp;quot;, &amp;quot;DATA 1&amp;quot;],
+...&amp;gt;    [&amp;quot;102&amp;quot;, &amp;quot;DATA 2&amp;quot;], [&amp;quot;103&amp;quot;, &amp;quot;DATA 3&amp;quot;]]}
+%{hostname: &amp;quot;ABC20&amp;quot;, ip_address: &amp;quot;192.168.1.20&amp;quot;, name_server: &amp;quot;8.8.8.8&amp;quot;,
+  ntp_server: &amp;quot;uk.pool.ntp.org&amp;quot;, user_name: &amp;quot;admin&amp;quot;, user_password: &amp;quot;password&amp;quot;,
+  vlans: [[&amp;quot;999&amp;quot;, &amp;quot;NATIVE&amp;quot;], [&amp;quot;100&amp;quot;, &amp;quot;VOICE&amp;quot;], [&amp;quot;101&amp;quot;, &amp;quot;DATA 1&amp;quot;],
+   [&amp;quot;102&amp;quot;, &amp;quot;DATA 2&amp;quot;], [&amp;quot;103&amp;quot;, &amp;quot;DATA 3&amp;quot;]]}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Now, let&amp;rsquo;s see if it works&amp;hellip;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-elixir&#34;&gt;iex&amp;gt; Render.base(device)
+&amp;quot;hostname ABC20
+no logging console
+username admin secret password
+aaa new-model
+aaa authentication login default local
+clock timezone GMT 0 0
+clock summer-time BST recurring last Sun Mar 1:00 last Sun Oct 1:00
+ip name-server 8.8.8.8
+no ip http server
+no ip http secure-server
+ntp server uk.pool.ntp.org
+ntp update-calendar
+!
+vlan 999
+  name NATIVE
+
+vlan 100
+  name VOICE
+
+vlan 101
+  name DATA 1
+
+vlan 102
+  name DATA 2
+
+vlan 103
+  name DATA 3
+  !
+interface 0
+ip address 192.168.1.20
+no shutdown&amp;quot;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Ahh, that&amp;rsquo;s much easier, and cleaner, super. One more thing before I go, I
+really liked with Python&amp;rsquo;s Jinja how you were able to split up your templates,
+much like Phoenix does. We don&amp;rsquo;t have access to Phoenix&amp;rsquo;s &lt;code&gt;render&lt;/code&gt; function, but
+we can mimic it.&lt;/p&gt;
+
+&lt;p&gt;We&amp;rsquo;ll start by pulling out the vlans section into it&amp;rsquo;s own template,
+&lt;code&gt;vlans.conf.eex&lt;/code&gt;, replacing it with this:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-elixir&#34;&gt;&amp;lt;%= if Map.has_key?(assigns, :vlans) do %&amp;gt;
+  &amp;lt;%= vlans(@vlans) %&amp;gt;
+&amp;lt;% end %&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;There&amp;rsquo;s a couple of things going on here. First, we&amp;rsquo;re going to check the map of
+data to see if it has a &lt;code&gt;vlans&lt;/code&gt; key. We do this, so that if we have a device
+that doesn&amp;rsquo;t have any vlans it&amp;rsquo;ll just skip this, rather than break the program.
+If we do have a &lt;code&gt;vlans&lt;/code&gt; key, we&amp;rsquo;re going to pass it to a new function called
+&lt;code&gt;vlans&lt;/code&gt;, that will be in the Render module.&lt;/p&gt;
+
+&lt;p&gt;Let&amp;rsquo;s have a look at it:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-elixir&#34;&gt;iex&amp;gt; defmodule Render do
+...&amp;gt;   require EEx
+...&amp;gt;
+...&amp;gt;   EEx.function_from_file(:def, :base,
+...&amp;gt;                          Path.expand(&amp;quot;./templates/base_example.conf.eex&amp;quot;),
+...&amp;gt;                          [:assigns])
+...&amp;gt;
+...&amp;gt;   EEx.function_from_file(:def, :vlans,
+...&amp;gt;                          Path.expand(&amp;quot;./templates/vlans.conf.eex&amp;quot;),
+...&amp;gt;                          [:vlans])
+...&amp;gt; end
+iex:15: warning: redefining module Render
+{:module, Render,
+ &amp;lt;&amp;lt;70, 79, 82, 49, 0, 0, 17, 236, 66, 69, 65, 77, 69, 120, 68, 99, 0, 0, 0, 202, 131, 104, 2, 100, 0, 14, 101, 108, 105, 120, 105, 114, 95, 100, 111, 99, 115, 95, 118, 49, 108, 0, 0, 0, 4, 104, 2, ...&amp;gt;&amp;gt;,
+ {:vlans, 1}}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;We redefine our &lt;code&gt;Render&lt;/code&gt; module, and call our &lt;code&gt;Render.base&lt;/code&gt; function again:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-elixir&#34;&gt;iex(16)&amp;gt; Render.base(device)
+&amp;quot;hostname ABC20
+no logging console
+username admin secret password
+aaa new-model
+aaa authentication login default local
+clock timezone GMT 0 0
+clock summer-time BST recurring last Sun Mar 1:00 last Sun Oct 1:00
+ip name-server 8.8.8.8
+no ip http server
+no ip http secure-server
+ntp server uk.pool.ntp.org
+ntp update-calendar
+!
+
+vlan 999
+  name NATIVE
+
+vlan 100
+  name VOICE
+
+vlan 101
+  name DATA 1
+
+vlan 102
+  name DATA 2
+
+vlan 103
+  name DATA 3
+  !
+interface 0
+ip address 192.168.1.20
+no shutdown&amp;quot;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;And, once again, we easily render our template. So, this enables us to build out
+a hierarchy of templates to cover all possibilities of data input we may have.
+Which is pretty cool if you ask me. It&amp;rsquo;s certainly going to make my job easier.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
       <title>Sam Chatmon: Sittin&#39; On Top Of The World</title>
-      <link>/post/2016-01-22-sam-chatmon-sittin-on-top-of-the-world/</link>
+      <link>/post/2016/01/sam-chatmon-sittin-on-top-of-the-world/</link>
       <pubDate>Fri, 22 Jan 2016 00:00:00 +0000</pubDate>
       
-      <guid>/post/2016-01-22-sam-chatmon-sittin-on-top-of-the-world/</guid>
+      <guid>/post/2016/01/sam-chatmon-sittin-on-top-of-the-world/</guid>
       <description>&lt;iframe width=&#34;640&#34; height=&#34;360&#34; src=&#34;https://www.youtube.com/embed/ueEQKZcXfjc&#34; frameborder=&#34;0&#34;&gt; &lt;/iframe&gt;
 </description>
     </item>
     
     <item>
+      <title>Notes on Elixir: Bodyless Function Clauses</title>
+      <link>/post/2016/01/notes-on-elixir-bodyless-functions/</link>
+      <pubDate>Wed, 13 Jan 2016 00:00:00 +0000</pubDate>
+      
+      <guid>/post/2016/01/notes-on-elixir-bodyless-functions/</guid>
+      <description>&lt;pre&gt;&lt;code class=&#34;language-elixir&#34;&gt;def func(argument)
+# NOTHING TO SEE HERE
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;A function head without a body clause? What&amp;rsquo;s the point in that, huh?&lt;/p&gt;
+
+&lt;p&gt;The bodyless function clause is something I&amp;rsquo;ve only come across recently, one of
+those things that I think I probably read about at some point but didn&amp;rsquo;t
+register until I &lt;a href=&#34;https://github.com/elixir-lang/elixir/pull/4109/files#r48349021&#34;&gt;submitted a pull request&lt;/a&gt;. I&amp;rsquo;ve not been able to find out
+much about them, but here&amp;rsquo;s a quick rundown of when you might see a bodyless
+function clause.&lt;/p&gt;
+
+&lt;p&gt;EDIT(14/01/16): I&amp;rsquo;ve added &lt;em&gt;Protocols&lt;/em&gt;.&lt;/p&gt;
+
+&lt;p&gt;As far as I know, the bodyless function clause is only something used within
+Elixir &amp;amp; Erlang, and possibly Prolog. The &lt;a href=&#34;http://www.erlang.org/doc/reference_manual/functions.html&#34;&gt;Erlang docs&lt;/a&gt; give an interesting
+explanation of what happens when a function is called.  This explanation hints
+at the separation of the head and body of functions and I believe applies to
+Elixir as well.&lt;/p&gt;
+
+&lt;p&gt;This explanation breaks functions up into the head and body, where the head &lt;em&gt;&amp;ldquo;consists
+of the function name, an argument list, and an optional guard sequence beginning
+with the keyword when&amp;rdquo;&lt;/em&gt;, and the body &lt;em&gt;&amp;ldquo;consists of a sequence of expressions&amp;rdquo;&lt;/em&gt;.&lt;/p&gt;
+
+&lt;p&gt;When a function is called, the function code is located, and the function clauses
+are checked in turn to find one where &lt;em&gt;&amp;ldquo;the patterns in the clause head can be
+successfully matched against the given arguments&amp;rdquo;&lt;/em&gt;, and &lt;em&gt;&amp;ldquo;the guard sequence, if
+any, is true&amp;rdquo;&lt;/em&gt;.  It&amp;rsquo;s only if a function head corresponds to this
+that the function body is then evaluated.  This gives the impression of the head
+and body being separate entities, the head being a kind of control mechanism
+that doesn&amp;rsquo;t necessarily require a body.&lt;/p&gt;
+
+&lt;p&gt;So, what is this useful for?  The three reasons I know of for using a bodyless
+function clause in Elixir are &lt;a href=&#34;https://github.com/elixir-lang/elixir/blob/master/lib/elixir/pages/Writing%20Documentation.md#function-arguments&#34;&gt;documentation&lt;/a&gt;, &lt;a href=&#34;http://elixir-lang.org/getting-started/modules.html#default-arguments&#34;&gt;default arguments&lt;/a&gt;
+and &lt;a href=&#34;http://elixir-lang.org/getting-started/protocols.html&#34;&gt;protocols&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;The Elixir compiler infers function argument names from the code. If the
+argument name is not explicit, for instance in the case of a pattern match on a
+data structure, this may sometimes result in something you don&amp;rsquo;t want. If so, you
+can use a bodyless function to define the name you want the argument to have,
+the name that would be used in the function&amp;rsquo;s documentation, using &lt;a href=&#34;https://github.com/elixir-lang/ex_doc&#34;&gt;ExDocs&lt;/a&gt; for example.&lt;/p&gt;
+
+&lt;p&gt;The compiler will infer the argument name for &lt;a href=&#34;http://elixir-lang.org/docs/stable/elixir/HashDict.html#size/1&#34;&gt;this function&lt;/a&gt; as &lt;code&gt;hash_dict&lt;/code&gt;;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-elixir&#34;&gt;def size(%HashDict{size: size}) do
+  size
+end
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;If we would rather it was &lt;code&gt;dict&lt;/code&gt; we could add in an extra function head:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-elixir&#34;&gt;def size(dict)
+
+def size(%HashDict{size: size}) do
+  size
+end
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;If you are including default arguments for a function with multiple clauses you
+have to declare them in a separate function head:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-elixir&#34;&gt;defmodule Lorem do
+  def ipsum(size, type \\ :paragraph, style \\ :lorem_ipsum)
+
+  def ipsum(size, :paragraph, style), do: ...
+  def ipsum(size, :sentence, style), do: ...
+  def ipsum(size, :word, style), do: ...
+end
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;In this very basic example there are 3 function clauses that have a body, and
+one bodyless function that defines the defult arguments for these function
+clauses.&lt;/p&gt;
+
+&lt;p&gt;My knowledge of protocols is very limited, so I&amp;rsquo;m going to leave a deeper
+explanation of them to a later post. What I do know is that a protocol is
+defined with a bodyless function, like so:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-elixir&#34;&gt;defprotocol Valid do
+  @doc &amp;quot;Returns true if data is considered nominally valid&amp;quot;
+  def valid?(data)
+end
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;A complete complete function with the same name is then expected, by the
+protocol, for each data type you want to implement it for.  In this case, for
+each data type you want to test for validity.&lt;/p&gt;
+
+&lt;p&gt;So, there you go, the function head, a mechanism in it&amp;rsquo;s own right, separate from
+the main function body.  If you know of any other uses of the bodyless function
+please do let me know.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Notes on Elixir: Upgrading to/Installing v1.2 on Ubuntu</title>
+      <link>/post/2016/01/notes-on-elixir-upgrading-to-installing-v12-on-ubuntu/</link>
+      <pubDate>Wed, 06 Jan 2016 00:00:00 +0000</pubDate>
+      
+      <guid>/post/2016/01/notes-on-elixir-upgrading-to-installing-v12-on-ubuntu/</guid>
+      <description>&lt;p&gt;&lt;strong&gt;EDIT:&lt;/strong&gt; Erlang solutions has
+&lt;a href=&#34;https://twitter.com/ErlangSolutions/status/685138290635333632&#34;&gt;now updated&lt;/a&gt;
+their Elixir package so you should be able to install/upgrade to v1.2 with
+&lt;code&gt;apt-get&lt;/code&gt; now.  Thankyou &lt;a href=&#34;https://www.erlang-solutions.com/&#34;&gt;Erlang Solutions&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;Elixir recently got bumped up to &lt;a href=&#34;http://elixir-lang.org/blog/2016/01/03/elixir-v1-2-0-released/&#34;&gt;version 1.2&lt;/a&gt;.  Installing Elixir on
+Ubuntu requires a package from &lt;a href=&#34;https://www.erlang-solutions.com/&#34;&gt;Erlang Solutions&lt;/a&gt; which hasn&amp;rsquo;t yet been
+updated. Therefore upgrading to v1.2 doesn&amp;rsquo;t yet work with &lt;code&gt;apt-get&lt;/code&gt;.  Instead
+you have to compile from source, which I just learnt how to do with some help
+from the elixir-lang IRC channel.  Here&amp;rsquo;s how.&lt;/p&gt;
+
+&lt;p&gt;Open up your terminal, &lt;code&gt;git clone&lt;/code&gt; the Elixir repo, checkout v1.2, test &amp;amp; make:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;git clone https://github.com/elixir-lang/elixir.git
+cd elixir/
+git checkout v1.2
+make clean test
+sudo make install
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;check the version:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-elixir&#34;&gt;elixir -v
+Erlang/OTP 18 [erts-7.2] [source] [64-bit] [smp:2:2] [async-threads:10] [kernel-poll:false]
+
+Elixir 1.2.0
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;And there you go.  This is on 14.04.1 btw.&lt;/p&gt;
+
+&lt;p&gt;As I mentioned this was from the kind folk that help people like me on IRC,
+specifically Nicd- &amp;amp; Gazler, so, thankyou.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Notes on Elixir: Pattern-Matching Maps</title>
+      <link>/post/2016/01/notes-on-elixir-pattern-matching-maps/</link>
+      <pubDate>Mon, 04 Jan 2016 00:00:00 +0000</pubDate>
+      
+      <guid>/post/2016/01/notes-on-elixir-pattern-matching-maps/</guid>
+      <description>
+
+&lt;p&gt;Following on from my &lt;a href=&#34;https://bordeltabernacle.github.io/2015/12/31/notes-on-elixir-pattern-matching.html&#34;&gt;last post&lt;/a&gt; about pattern-matching, &lt;code&gt;maps&lt;/code&gt;, the main
+key-value store in Elixir, have an interesting capability that sets them apart
+from other data structures with regards to pattern-matching.&lt;/p&gt;
+
+&lt;p&gt;A &lt;code&gt;map&lt;/code&gt; can actually pattern-match on just a subset of a value. The key(s) in
+the pattern have to exist in the match, but the two structures don&amp;rsquo;t have to
+mirror each other in the same way a &lt;code&gt;list&lt;/code&gt; or a &lt;code&gt;tuple&lt;/code&gt; has to.  For example:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-elixir&#34;&gt;iex(1)&amp;gt; [a, b] = [1, 2, 3]
+** (MatchError) no match of right hand side value: [1, 2, 3]
+
+iex(1)&amp;gt; {a, b} = {1, 2, 3}
+** (MatchError) no match of right hand side value: {1, 2, 3}
+
+iex(1)&amp;gt; %{:a =&amp;gt; one} = %{:a =&amp;gt; 1, :b =&amp;gt; 2, :c =&amp;gt;3}
+%{a: 1, b: 2, c: 3}
+iex(2)&amp;gt; one
+1
+iex(3)&amp;gt; %{:a =&amp;gt; one, :c =&amp;gt; three} = %{:a =&amp;gt; 1, :b =&amp;gt; 2, :c =&amp;gt;3}
+%{a: 1, b: 2, c: 3}
+iex(4)&amp;gt; three
+3
+iex(5)&amp;gt; one
+1
+iex(6)&amp;gt; %{} = %{:a =&amp;gt; 1, :b =&amp;gt; 2, :c =&amp;gt;3}
+%{a: 1, b: 2, c: 3}
+iex(7)&amp;gt; %{:d =&amp;gt; four} = %{:a =&amp;gt; 1, :b =&amp;gt; 2, :c =&amp;gt;3}
+** (MatchError) no match of right hand side value: %{a: 1, b: 2, c: 3}
+
+iex(8)&amp;gt; %{:a =&amp;gt; one, :d =&amp;gt; four} = %{:a =&amp;gt; 1, :b =&amp;gt; 2, :c =&amp;gt;3}
+** (MatchError) no match of right hand side value: %{a: 1, b: 2, c: 3}
+
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;We can see that neither the &lt;code&gt;list&lt;/code&gt; nor the &lt;code&gt;tuple&lt;/code&gt; matches if the data
+structure of the pattern is different to the data structure of the match, namely
+the size.  Whereas this is not the case for the &lt;code&gt;map&lt;/code&gt;.  Because the key is
+present in both the pattern and the match then the match is successful,
+regardless of the different sizes of the pattern and the match.  An empty
+&lt;code&gt;map&lt;/code&gt; will also match.&lt;/p&gt;
+
+&lt;p&gt;However the match will not be successful if the key in the pattern is not in the
+match. This is also the case even if there are matching keys. So any key used in
+the pattern has to be present in the match.&lt;/p&gt;
+
+&lt;p&gt;You&amp;rsquo;ll see this used extensively in the &lt;a href=&#34;http://www.phoenixframework.org/&#34;&gt;Phoenix Framework&lt;/a&gt; when dealing
+with the parameters passed to a function.  The function is able to pick out
+of the parameters only those pieces of data it needs.&lt;/p&gt;
+
+&lt;p&gt;Here we have a function that creates a new user:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-elixir&#34;&gt;def create(conn, %{&amp;quot;user&amp;quot; =&amp;gt; user_params}) do
+  # do stuff with user_params
+end
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The map that is actually passed in as the second argument to this function is
+this:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-elixir&#34;&gt;Parameters: %{&amp;quot;_csrf_token&amp;quot; =&amp;gt; &amp;quot;UR99GwILHTtzbSBUYRwmBVpdeDY/AAAA3K70jEiO9UhgPVwh+d3WYw==&amp;quot;,
+              &amp;quot;_utf8&amp;quot; =&amp;gt; &amp;quot;✓&amp;quot;,
+              &amp;quot;user&amp;quot; =&amp;gt; %{&amp;quot;name&amp;quot; =&amp;gt; &amp;quot;Memphis Minnie&amp;quot;,
+                          &amp;quot;password&amp;quot; =&amp;gt; &amp;quot;[FILTERED]&amp;quot;,
+                          &amp;quot;username&amp;quot; =&amp;gt; &amp;quot;minnie&amp;quot;}}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The &lt;code&gt;create&lt;/code&gt; function pattern-matches against only the &lt;code&gt;&amp;quot;user&amp;quot;&lt;/code&gt; key, binding the associated
+value, in this case another map, to the &lt;code&gt;user_params&lt;/code&gt; variable for use within
+the function. This function basically picks out the user info from the
+given parameters map, discarding the rest of the data as irrelevant to its
+needs.&lt;/p&gt;
+
+&lt;p&gt;It is also possible to match against the whole map at the same time as pattern-matching
+part of the map.  Let&amp;rsquo;s change the &lt;code&gt;create&lt;/code&gt; function to look like this:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-elixir&#34;&gt;def create(conn, parameters = %{&amp;quot;user&amp;quot; =&amp;gt; user_params}) do
+  IO.inspect user_params[&amp;quot;name&amp;quot;]
+  IO.inspect parameters[&amp;quot;_utf8&amp;quot;]
+  # do stuff with user_params
+end
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;And we can see below when we use this function that we&amp;rsquo;ve matched &lt;code&gt;parameters&lt;/code&gt;
+to the Parameters map that is passed in, and &lt;code&gt;user_params&lt;/code&gt; to the the value of
+the &lt;code&gt;&amp;quot;user&amp;quot;&lt;/code&gt; key in the Parameters map:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-elixir&#34;&gt;[info] POST /users
+&amp;quot;Skip James&amp;quot;
+&amp;quot;✓&amp;quot;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Interestingly, the &lt;code&gt;parameters&lt;/code&gt; pattern-match can also be written the other way around:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-elixir&#34;&gt;def create(conn, %{&amp;quot;user&amp;quot; =&amp;gt; user_params} = parameters) do
+  IO.inspect user_params[&amp;quot;name&amp;quot;]
+  IO.inspect parameters[&amp;quot;_utf8&amp;quot;]
+  # do stuff with user_params
+end
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This is because the pattern here is actually &lt;code&gt;%{&amp;quot;user&amp;quot; =&amp;gt; user_params} = parameters&lt;/code&gt;
+and the match is the Parameters map being passed in.  And when
+you&amp;rsquo;re &lt;em&gt;inside a pattern&lt;/em&gt; you can also match different parts of the pattern,
+binding them to different variables.  As far as I can tell, this is the more
+idiomatic approach, and what you will see most often.&lt;/p&gt;
+
+&lt;p&gt;Pattern-matching provides a really nice way to reach in and grab data out of a
+&lt;code&gt;map&lt;/code&gt; key-value store.&lt;/p&gt;
+
+&lt;h2 id=&#34;further-reading&#34;&gt;Further Reading&lt;/h2&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&#34;https://stackoverflow.com/questions/23693173/elixir-pattern-matching-works-differently-for-tuples-and-maps/23695899#23695899&#34;&gt;Elixir: pattern matching works differently for tuples and maps&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;http://www.phoenixframework.org/docs/adding-pages#section-a-new-action&#34;&gt;Phoenix Framework Getting Started Guide&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+    </item>
+    
+    <item>
       <title>Big Bill Broonzy: Getting Older Every Day</title>
-      <link>/post/2015-09-25-big-bill-broonzy-getting-older-every-day/</link>
+      <link>/post/2015/09/big-bill-broonzy-getting-older-every-day/</link>
       <pubDate>Fri, 25 Sep 2015 00:00:00 +0000</pubDate>
       
-      <guid>/post/2015-09-25-big-bill-broonzy-getting-older-every-day/</guid>
+      <guid>/post/2015/09/big-bill-broonzy-getting-older-every-day/</guid>
       <description>&lt;iframe width=&#34;640&#34; height=&#34;360&#34; src=&#34;https://www.youtube.com/embed/hIWBbeUge5c&#34;frameborder=&#34;0&#34;&gt;&lt;/iframe&gt;
 </description>
     </item>
     
     <item>
       <title>Notes on Clojure: Keywords &amp; Symbols Confusion</title>
-      <link>/post/2015-09-25-notes-on-clojure-keywords-symbols/</link>
+      <link>/post/2015/09/notes-on-clojure-keywords-symbols/</link>
       <pubDate>Fri, 25 Sep 2015 00:00:00 +0000</pubDate>
       
-      <guid>/post/2015-09-25-notes-on-clojure-keywords-symbols/</guid>
+      <guid>/post/2015/09/notes-on-clojure-keywords-symbols/</guid>
       <description>&lt;p&gt;Having not used Clojure extensively yet, or really much at all, I&amp;rsquo;m still unsure as to when to use Keywords.  So I just spent a bit of time exploring them, and subsequently touched on Symbols too.  And in writing this post confused myself further in the process.  What you have here then is not a formed explanation of either Keywords or Symbols, but observations on their behaviour. While reading this, imagine me saying &amp;lsquo;huh?&amp;rsquo; and scratching my head like Stan Laurel.&lt;/p&gt;
 
 &lt;p&gt;Keywords are described in the &lt;a href=&#34;http://clojure.org/data_structures#Data%20Structures-Keywords&#34;&gt;Clojure docs&lt;/a&gt;, within the Data Structures section, as such:&lt;/p&gt;
@@ -1120,20 +1959,20 @@ user=&amp;gt; &#39;:blues&#39;
     
     <item>
       <title>Lonnie Johnson: Away Down In The Alley Blues</title>
-      <link>/post/2015-09-16-lonnie-johnson-away-down-in-the-alley-blues/</link>
+      <link>/post/2015/09/lonnie-johnson-away-down-in-the-alley-blues/</link>
       <pubDate>Wed, 16 Sep 2015 00:00:00 +0000</pubDate>
       
-      <guid>/post/2015-09-16-lonnie-johnson-away-down-in-the-alley-blues/</guid>
+      <guid>/post/2015/09/lonnie-johnson-away-down-in-the-alley-blues/</guid>
       <description>&lt;iframe width=&#34;640&#34; height=&#34;360&#34; src=&#34;https://www.youtube.com/embed/n4Ket08gies&#34;frameborder=&#34;0&#34;&gt;&lt;/iframe&gt;
 </description>
     </item>
     
     <item>
       <title>Notes on Django: Population Script</title>
-      <link>/post/2015-09-16-notes-on-django-population-script/</link>
+      <link>/post/2015/09/notes-on-django-population-script/</link>
       <pubDate>Wed, 16 Sep 2015 00:00:00 +0000</pubDate>
       
-      <guid>/post/2015-09-16-notes-on-django-population-script/</guid>
+      <guid>/post/2015/09/notes-on-django-population-script/</guid>
       <description>&lt;p&gt;After my last Django post I happened across &lt;a href=&#34;http://www.tangowithdjango.com/book/chapters/models.html#creating-a-population-script&#34;&gt;this population script&lt;/a&gt; from &lt;a href=&#34;http://www.tangowithdjango.com/&#34;&gt;Tango with Django&lt;/a&gt;.  So I&amp;rsquo;ve updated it and adapted it to my own needs.  Ha, Screw You &lt;a href=&#34;http://www.discoposse.com/index.php/2014/11/09/pay-yourself-first-the-art-of-reducing-technical-debt/&#34;&gt;Technical Debt!&lt;/a&gt;&lt;/p&gt;
 
 &lt;p&gt;&lt;code&gt;example models.py&lt;/code&gt;&lt;/p&gt;
@@ -1293,10 +2132,10 @@ SuperUser: uname
     
     <item>
       <title>Notes on Clojure: Dipping My Toes In</title>
-      <link>/post/2015-09-04-clojure-dipping-toes/</link>
+      <link>/post/2015/09/clojure-dipping-toes/</link>
       <pubDate>Fri, 04 Sep 2015 00:00:00 +0000</pubDate>
       
-      <guid>/post/2015-09-04-clojure-dipping-toes/</guid>
+      <guid>/post/2015/09/clojure-dipping-toes/</guid>
       <description>&lt;p&gt;Maybe because I&amp;rsquo;m such a late arrival to this programming pastime, I feel a certain inadequacy, a need to over compensate.  Or maybe I just find it exciting learning new things, and I just want to get deeper and consume everything.  Anyway, I&amp;rsquo;ve been getting more interested in functional programming, I don&amp;rsquo;t know why.  I&amp;rsquo;m not so embedded in object-oriented, and I&amp;rsquo;ve been trying to understand JavaScript&amp;rsquo;s prototype-based programming, and if I&amp;rsquo;m honest, these concepts aren&amp;rsquo;t yet meaningful enough to me to matter so much outside of syntax and the practicalities of how to write code, yet functional programming seems to make a certain amount of sense. Perhaps this will become an endeavour in proving myself wrong. So, I listened to &lt;a href=&#34;https://twitter.com/gigasquid&#34;&gt;Carin Meier&lt;/a&gt; on &lt;a href=&#34;https://changelog.com/171/&#34;&gt;The Changelog&lt;/a&gt; and bought &lt;a href=&#34;http://www.amazon.co.uk/Living-Clojure-Carin-Meier/dp/1491909048/ref=sr_1_1?ie=UTF8&amp;amp;qid=1441319254&amp;amp;sr=8-1&amp;amp;keywords=living+clojure&#34;&gt;her book&lt;/a&gt;, and am going to start learning Clojure.&lt;/p&gt;
 
 &lt;p&gt;&lt;a href=&#34;http://leiningen.org/&#34;&gt;Leiningen&lt;/a&gt; is the tool Carin recommends for getting started with Clojure, so let&amp;rsquo;s install that.
@@ -1490,437 +2329,6 @@ user=&amp;gt; (cons &amp;ldquo;down&amp;rdquo; (cons 7 &amp;lsquo;(5, &amp;ldquo
 &lt;p&gt;That&amp;rsquo;s as far as I got last night. I know it&amp;rsquo;s not far, but having kids makes me tired.  And I just want to reiterate again, this is basically just regurgitating Carin&amp;rsquo;s work, go &lt;a href=&#34;http://www.amazon.co.uk/Living-Clojure-Carin-Meier/dp/1491909048/ref=sr_1_1?ie=UTF8&amp;amp;qid=1441319254&amp;amp;sr=8-1&amp;amp;keywords=living+clojure&#34;&gt;buy her book&lt;/a&gt;.&lt;/p&gt;
 
 &lt;p&gt;Interestingly, the name &lt;em&gt;Leiningen&lt;/em&gt; comes from the short story &lt;a href=&#34;http://www.classicshorts.com/stories/lvta.html&#34;&gt;Leiningen versus the Ants&lt;/a&gt;.  A tale of plantation owner Leiningen&amp;rsquo;s battle against an invading army of flesh-eating ants.  It&amp;rsquo;s a really good read, triumph over adversity, the importance of intelligence and resourcefulness, I highly recommend you &lt;a href=&#34;http://www.classicshorts.com/stories/lvta.html&#34;&gt;read&lt;/a&gt; it.&lt;/p&gt;
-</description>
-    </item>
-    
-    <item>
-      <title>Notes on Django: Setting Up</title>
-      <link>/post/2015-09-03-notes-on-django-setting-up/</link>
-      <pubDate>Thu, 03 Sep 2015 00:00:00 +0000</pubDate>
-      
-      <guid>/post/2015-09-03-notes-on-django-setting-up/</guid>
-      <description>&lt;p&gt;I&amp;rsquo;m starting to develop multiple Django projects, but am still referring to the &lt;em&gt;(excellent)&lt;/em&gt; &lt;a href=&#34;https://docs.djangoproject.com/en/1.8/intro/tutorial01/&#34;&gt;Django tutorial&lt;/a&gt; to get set up, so I thought I&amp;rsquo;d write out the steps I take to set up a new Django project and it&amp;rsquo;s associated development environment, just to help remember it and have an easy reference for the future.&lt;/p&gt;
-
-&lt;p&gt;I work on my Django projects within a &lt;a href=&#34;https://www.vagrantup.com/&#34;&gt;Vagrant&lt;/a&gt; environment.  This creates a nice, easy-to-use, isolated environment that is simple to bring up, tear down and replicate.  It also means I, controversially, don&amp;rsquo;t use &lt;a href=&#34;https://virtualenv.pypa.io/en/latest/&#34;&gt;virtualenv&lt;/a&gt;, as Vagrant isolates things for me.  Though I admit, I&amp;rsquo;m still an amateur and am probably overlooking something important, especially as nothing I&amp;rsquo;ve made has yet made it into production.  To be honest I&amp;rsquo;d really like to move everything to &lt;a href=&#34;https://www.docker.com/&#34;&gt;Docker&lt;/a&gt; but I haven&amp;rsquo;t yet had the time to properly learn Docker or explore the feasability of this.  One of the nice things about Vagrant is that I have a separate VM for my PostgreSQL database.  So, because I&amp;rsquo;m still learning Postgres, and run into migration problems when changing models, it is easy to just destroy and rebuild my database backend quickly.  This does however destroy any data I have, which currently isn&amp;rsquo;t a big problem.  I want to put aside some time in my workflow for creating a script that populates the database with some basic data for development.  But I really need to spend some time learning how to properly deal with the database and migrations, of course.&lt;/p&gt;
-
-&lt;p&gt;My Vagrant setup can be found on my &lt;a href=&#34;https://github.com/bordeltabernacle/Vagrant-Django-PostgreSQL&#34;&gt;Github&lt;/a&gt;, and consists of a Vagrantfile, a couple of bash scripts to provision each machine, and a shared folder that contains a pip requirements file, and will go on to contain my Django project&amp;rsquo;s root folder.  This means I can work on my Django project files on my laptop rather than in the VM.  I have a private &lt;a href=&#34;https://about.gitlab.com/downloads/&#34;&gt;GitLab&lt;/a&gt; server that I use to house all my project repositories, with my root git folder containing the Vagrant setup and this shared folder.&lt;/p&gt;
-
-&lt;p&gt;This is my Vagrantfile:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-ruby&#34;&gt;# -*- mode: ruby -*-
-# vi: set ft=ruby :
-
-# These are the ip &amp;amp; port variables that can be changed on a per-project basis
-vagrant_root = File.dirname(__FILE__)
-django_8000_fp = &amp;quot;8011&amp;quot;
-django_80_fp = &amp;quot;8091&amp;quot;
-db_8000_fp = &amp;quot;8012&amp;quot;
-db_80_fp = &amp;quot;8092&amp;quot;
-db_postgres_fp = &amp;quot;25432&amp;quot;
-django_private_ip = &amp;quot;10.101.9.101&amp;quot;
-db_private_ip = &amp;quot;10.101.9.102&amp;quot;
-
-Vagrant.configure(2) do |config|
-
-    config.vm.box = &amp;quot;ubuntu/trusty64&amp;quot;
-    config.vm.box_url = &amp;quot;https://atlas.hashicorp.com/ubuntu/boxes/trusty64&amp;quot;
-    config.vm.provider &amp;quot;virtualbox&amp;quot; do |vb|
-        vb.memory = &amp;quot;1024&amp;quot;
-        vb.cpus = &amp;quot;1&amp;quot;
-        vb.gui = false  # I sometimes run into problems getting the environment
-                        # set up that are fixed by &#39;turning on&#39; the Virtualbox
-                        # screen for the VM, by changing this to true
-    end
-
-    if Vagrant.has_plugin?(&amp;quot;vagrant-hostmanager&amp;quot;)
-        # this is a great Vagrant plugin that takes care of the VM /etc/hosts
-        # files
-        config.hostmanager.enabled = true
-        config.hostmanager.manage_host = true
-        config.hostmanager.ignore_private_ip = false
-        config.hostmanager.include_offline = true
-    end
-
-    # The following sets up two machines, one called django, the other called db.
-    # They both currently have both a NAT network and a private network, which
-    # I think is unneccessary, I initially did it so the dev machine would have
-    # an ip address from the staging server subnet to make setting it up there
-    # easier.  This has created a problem for me in the past when pushing changes
-    # to my Gitlab repos, as the Vagrant machine set up a route to the /16
-    # subnet which included my Gitlab server, so I would have to shut down my
-    # Vagrant machines and delete the route from my routing table to be able to
-    # push commits to my remote repo. Ugh.
-    config.vm.define &amp;quot;django&amp;quot; do |django|
-        django.vm.hostname = &amp;quot;django&amp;quot;
-        django.vm.network &amp;quot;private_network&amp;quot;, ip: django_private_ip, :netmask =&amp;gt; &amp;quot;255.255.0.0&amp;quot;
-        django.vm.network &amp;quot;forwarded_port&amp;quot;, guest: 8000, host: django_8000_fp
-        django.vm.network &amp;quot;forwarded_port&amp;quot;, guest: 80, host: django_80_fp
-        django.vm.synced_folder &amp;quot;#{vagrant_root}/shared&amp;quot;, &amp;quot;/home/vagrant/shared&amp;quot;
-        # set up the shared folder in the shared directory within the current
-        # directory
-        django.vm.provision :shell, :path =&amp;gt; &amp;quot;#{vagrant_root}/provision/djangonode-setup.sh&amp;quot;
-        # initiate the provisioning bash script.
-    end
-
-    config.vm.define &amp;quot;db&amp;quot; do |db|
-        db.vm.hostname = &amp;quot;db&amp;quot;
-        db.vm.network &amp;quot;private_network&amp;quot;, ip: db_private_ip, :netmask =&amp;gt; &amp;quot;255.255.0.0&amp;quot;
-        db.vm.network &amp;quot;forwarded_port&amp;quot;, guest: 8000, host: db_8000_fp
-        db.vm.network &amp;quot;forwarded_port&amp;quot;, guest: 80, host: db_80_fp
-        db.vm.network &amp;quot;forwarded_port&amp;quot;, guest: 5432, host: db_postgres_fp
-        db.vm.provision :shell, :path =&amp;gt; &amp;quot;#{vagrant_root}/provision/dbnode-setup.sh&amp;quot;
-    end
-
-end
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;The django provision file just installs pip and runs the requirements file.  The db provision file installs Postgres and sets up the database.&lt;/p&gt;
-
-&lt;p&gt;So, once I&amp;rsquo;ve updated any variables in this Vagrantfile and the db provision file, I&amp;rsquo;ll set up the new remote repo on my Gitlab server.  Then we unchain Django and get developing&amp;hellip;&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;laptop$ cd root-project-dir
-laptop$ vagrant up
-Bringing machine &#39;django&#39; up with &#39;virtualbox&#39; provider...
-Bringing machine &#39;db&#39; up with &#39;virtualbox&#39; provider...
-[...omitted for brevity]
-laptop$
-laptop$ vagrant ssh django
-Welcome to Ubuntu 14.04.2 LTS (GNU/Linux 3.13.0-55-generic x86_64)
-
- * Documentation:  https://help.ubuntu.com/
-
- System information disabled due to load higher than 1.0
-
-  Get cloud support with Ubuntu Advantage Cloud Guest:
-    http://www.ubuntu.com/business/services/cloud
-
-
-vagrant@django:~$ cd shared/
-vagrant@django:~/shared$ django-admin startproject mysite
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;At this point I need to change the Django settings file to reflect the Postgres database setup:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;DATABASES = {
-    &#39;default&#39;: {
-        &#39;ENGINE&#39;: &#39;django.db.backends.postgresql_psycopg2&#39;,
-        &#39;NAME&#39;: &#39;db&#39;,
-        &#39;USER&#39;: &#39;django&#39;,
-        &#39;PASSWORD&#39;: &#39;django&#39;,
-        &#39;HOST&#39;: &#39;db&#39;,
-        &#39;PORT&#39;: &#39;5432&#39;,
-    }
-}   # Obviously these aren&#39;t the actual names and passwords I use, duh.  Though
-    # the vagrant hostmanager plugin does mean you just have to put db, the name
-    # of the Postgres VM, in as the Database host name, ahhhh niiice.
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;Whilst in the settings file let&amp;rsquo;s update our location:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;LANGUAGE_CODE = &#39;en-gb&#39;
-
-TIME_ZONE = &#39;Europe/London&#39;
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;and create the &lt;code&gt;static&lt;/code&gt; directory for CSS, JavaScript, fonts etc. and &lt;code&gt;media&lt;/code&gt; directory for images, pdf&amp;rsquo;s and the like:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;STATIC_URL = &#39;/static/&#39;
-STATIC_ROOT = &#39;/home/vagrant/shared/mysite/appname/static/&#39;
-MEDIA_URL = &#39;/static/media/&#39;
-MEDIA_ROOT = &#39;/home/vagrant/shared/mysite/appname/static/media/&#39;
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;Don&amp;rsquo;t forget to actually create these directories!
-Back in the django VM:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;vagrant@django:~/shared$ cd mysite
-vagrant@django:~/shared/mysite$ python manage.py migrate
-[...omitted for brevity]
-vagrant@django:~/shared/mysite$
-vagrant@django:~/shared/mysite$ python manage.py runserver 0.0.0.0:8000
-
-Performing system checks...
-
-System check identified no issues (0 silenced).
-September 03, 2015 - 12:03:15
-Django version 1.8.2, using settings &#39;mysite.settings&#39;
-Starting development server at http://0.0.0.0:8000/
-Quit the server with CONTROL-C.
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;Running the Django server at &lt;code&gt;0.0.0.0:8000&lt;/code&gt; makes the site accessible from outside the VM, on the port specified in the Vagrantfile.  So, if I used the Vagrantfile above, which contains &lt;code&gt;django_8000_fp = &amp;quot;8011&amp;quot;&lt;/code&gt; then in the browser on my laptop I would got o &lt;code&gt;http://localhost:8011&lt;/code&gt; which would bring up the Django site.&lt;/p&gt;
-
-&lt;p&gt;If that works, go on to set up the app:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;vagrant@django:~/shared/mysite$ python manage.py startapp appname
-# pop your app in the INSTALLED_APPS section of the settings.py file
-vagrant@django:~/shared/mysite$ python manage.py makemigrations appname
-vagrant@django:~/shared/mysite$ python manage.py migrate
-# might as well create the admin superuser while we&#39;re here
-vagrant@django:~/shared/mysite$ python manage.py createsuperuser
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;Go build stuff.&lt;/p&gt;
-</description>
-    </item>
-    
-    <item>
-      <title>Memphis Minnie: Down By The Riverside</title>
-      <link>/post/2015-09-02-memphis-minnie-down-by-the-riverside/</link>
-      <pubDate>Wed, 02 Sep 2015 00:00:00 +0000</pubDate>
-      
-      <guid>/post/2015-09-02-memphis-minnie-down-by-the-riverside/</guid>
-      <description>&lt;iframe width=&#34;640&#34; height=&#34;360&#34; src=&#34;https://www.youtube.com/embed/blBZgM4e-CY&#34; frameborder=&#34;0&#34;&gt; &lt;/iframe&gt;
-</description>
-    </item>
-    
-    <item>
-      <title>Notes on Python: args &#39;n&#39; kwargs</title>
-      <link>/post/2015-08-26-args-kwargs/</link>
-      <pubDate>Wed, 26 Aug 2015 00:00:00 +0000</pubDate>
-      
-      <guid>/post/2015-08-26-args-kwargs/</guid>
-      <description>&lt;p&gt;Python&amp;rsquo;s &lt;code&gt;*args&lt;/code&gt; &amp;amp; &lt;code&gt;**kwargs&lt;/code&gt; have always intimidated me for some reason.  Since I&amp;rsquo;ve been working with Django they&amp;rsquo;ve turned up more frequently, for instance, when overriding a model&amp;rsquo;s &lt;code&gt;save&lt;/code&gt; function:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;class myModel(models.Model):
-    name = models.CharField()
-
-    def save(self, *args, **kwargs):
-        if not self.id:
-            # Newly created object so set slug
-            self.slug = slugify(self.name)
-
-        super(myModel, self).save(*args, **kwargs)
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;And so I thought I&amp;rsquo;d get to the bottom of what they are.&lt;/p&gt;
-
-&lt;p&gt;Basically, they allow a function to accept an indeterminate, variable number of arguments or keyword arguments.  The &lt;code&gt;args&lt;/code&gt; and &lt;code&gt;kwargs&lt;/code&gt; bits are actually not important, it&amp;rsquo;s the &lt;code&gt;*&lt;/code&gt; &amp;amp; &lt;code&gt;**&lt;/code&gt; that are, similar I guess to their use elsewhere as a wildcard symbol.  So you can just use the asterisks on their own or even &lt;code&gt;*thing&lt;/code&gt; &amp;amp; &lt;code&gt;**things&lt;/code&gt;, but don&amp;rsquo;t do that, you&amp;rsquo;ll upset people.&lt;/p&gt;
-
-&lt;p&gt;For instance:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;&amp;gt;&amp;gt;&amp;gt; def print_singers(*args):
-...     # Notice when we do something with `args` we lose the asterisk
-...     for arg in args:
-...         print arg
-...
-&amp;gt;&amp;gt;&amp;gt; print_singers(&#39;R.L. Burnside&#39;)
-R.L. Burnside
-&amp;gt;&amp;gt;&amp;gt;
-&amp;gt;&amp;gt;&amp;gt; print_singers(&#39;R.L. Burnside&#39;, &#39;Bessie Smith&#39;, &#39;Skip James&#39;, &#39;Memphis Minnie&#39;)
-R.L. Burnside
-Bessie Smith
-Skip James
-Memphis Minnie
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;We can also include a formal parameter alongside our &lt;code&gt;*args&lt;/code&gt;.  A formal parameter just means it is mandatory, that an argument must be passed to it.&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;&amp;gt;&amp;gt;&amp;gt; def print_singers(genre, *args):
-...     print &#39;Genre: &#39; + genre
-...     for arg in args:
-...         print arg
-...
-&amp;gt;&amp;gt;&amp;gt; print_singers(&#39;Blues&#39;, &#39;R.L. Burnside&#39;, &#39;Bessie Smith&#39;, &#39;Skip James&#39;, &#39;Memphis Minnie&#39;)
-Genre: Blues
-R.L. Burnside
-Bessie Smith
-Skip James
-Memphis Minnie
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;This formal parameter is positional, so we have to make sure we pass our arguments to the function in order:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;&amp;gt;&amp;gt;&amp;gt; print_singers(&#39;R.L. Burnside&#39;, &#39;Blues&#39;, &#39;Bessie Smith&#39;, &#39;Skip James&#39;, &#39;Memphis Minnie&#39;)
-Genre: R.L. Burnside
-Blues
-Bessie Smith
-Skip James
-Memphis Minnie
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;This doesn&amp;rsquo;t, however, work the other way around:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;&amp;gt;&amp;gt;&amp;gt; def print_singers(*args, genre):
-  File &amp;quot;&amp;lt;stdin&amp;gt;&amp;quot;, line 1
-    def print_singers(*args, genre):
-                                 ^
-SyntaxError: invalid syntax
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;&lt;code&gt;**kwargs&lt;/code&gt; is much the same, but with named, &lt;code&gt;key/value&lt;/code&gt;, arguments:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;&amp;gt;&amp;gt;&amp;gt; def blues_singer(**kwargs):
-...    # Notice we use `.items`, as `kwargs` returns a dictionary
-...    for key, value in kwargs.items():
-...        print key + &#39; = &#39; + value
-...
-&amp;gt;&amp;gt;&amp;gt; blues_singer(name=&#39;Memphis Minnie&#39;)
-name = Memphis Minnie
-&amp;gt;&amp;gt;&amp;gt;
-&amp;gt;&amp;gt;&amp;gt; blues_singer(name=&#39;Memphis Minnie&#39;, born=&#39;3rd June 1897&#39;, died=&#39;6th August 1973&#39;)
-born = 3rd June 1897
-name = Memphis Minnie
-died = 6th August 1973
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;&lt;code&gt;**kwargs&lt;/code&gt; also works alongside formal parameters:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;&amp;gt;&amp;gt;&amp;gt; def blues_singer(name, **kwargs):
-...     print name
-...     for key, value in kwargs.items():
-...         print key + &#39; = &#39; + value
-...
-&amp;gt;&amp;gt;&amp;gt; blues_singer(name=&#39;Memphis Minnie&#39;, born=&#39;3rd June 1897&#39;, died=&#39;6th August 1973&#39;)
-Memphis Minnie
-born = 3rd June 1897
-died = 6th August 1973
-&amp;gt;&amp;gt;&amp;gt;
-&amp;gt;&amp;gt;&amp;gt; blues_singer(name=&#39;Memphis Minnie&#39;, born=&#39;3rd June 1897&#39;, died=&#39;6th August 1973&#39;, popular_songs=&#39;Me and My Chauffeur, Evil Devil Woman Blues&#39;)
-Memphis Minnie
-born = 3rd June 1897
-died = 6th August 1973
-popular_songs = Me and My Chauffeur, Evil Devil Woman Blues
-&amp;gt;&amp;gt;&amp;gt;
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;As well as being used in defining functions &lt;code&gt;*args&lt;/code&gt; &amp;amp; &lt;code&gt;**kwargs&lt;/code&gt; can also be used when calling functions:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;&amp;gt;&amp;gt;&amp;gt; def blues_singer(name, born, died):
-...     print name + &#39; was born on &#39; + born + &#39; and died on &#39; + died
-...
-&amp;gt;&amp;gt;&amp;gt; # We define our arguments in a separate variable
-&amp;gt;&amp;gt;&amp;gt; memphis_minnie = (&#39;Memphis Minnie&#39;, &#39;3rd June 1897&#39;, &#39;6th August 1973&#39;)
-&amp;gt;&amp;gt;&amp;gt;
-&amp;gt;&amp;gt;&amp;gt; # We call the function with the `*` before our arguments variable
-&amp;gt;&amp;gt;&amp;gt; blues_singer(*memphis_minnie)
-Memphis Minnie was born on 3rd June 1897 and died on 6th August 1973
-&amp;gt;&amp;gt;&amp;gt;
-&amp;gt;&amp;gt;&amp;gt; # Using `args` for our variable name might make more sense
-&amp;gt;&amp;gt;&amp;gt; args = (&#39;Memphis Minnie&#39;, &#39;3rd June 1897&#39;, &#39;6th August 1973&#39;)
-&amp;gt;&amp;gt;&amp;gt;
-&amp;gt;&amp;gt;&amp;gt; blues_singer(*args)
-Memphis Minnie was born on 3rd June 1897 and died on 6th August 1973
-&amp;gt;&amp;gt;&amp;gt;
-&amp;gt;&amp;gt;&amp;gt; args = (&#39;Bessie Smith&#39;, &#39;15th April 1894&#39;, &#39;26th September 1937&#39;)
-&amp;gt;&amp;gt;&amp;gt;
-&amp;gt;&amp;gt;&amp;gt; blues_singer(*args)
-Bessie Smith was born on 15th April 1894 and died on 26th September 1937
-&amp;gt;&amp;gt;&amp;gt;
-&amp;gt;&amp;gt;&amp;gt; # And we can pass the values in as a combination of formal parameters and a list of `args`
-&amp;gt;&amp;gt;&amp;gt; args = (&#39;15th April 1894&#39;, &#39;26th September 1937&#39;)
-&amp;gt;&amp;gt;&amp;gt;
-&amp;gt;&amp;gt;&amp;gt; blues_singer(&#39;Memphis Minnie&#39;, *args)
-Memphis Minnie was born on 3rd June 1897 and died on 6th August 1973
-&amp;gt;&amp;gt;&amp;gt;
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;Using &lt;code&gt;*args&lt;/code&gt; when calling our function unpacks the values in the &lt;code&gt;args&lt;/code&gt; variable and passes them as positional arguments to the function.
-And if we try and ask it to unpack and pass a different number of values than is asked for by the function?&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;&amp;gt;&amp;gt;&amp;gt; args = (&#39;Bessie Smith&#39;, &#39;15th April 1894&#39;)
-&amp;gt;&amp;gt;&amp;gt;
-&amp;gt;&amp;gt;&amp;gt; blues_singer(*args)
-Traceback (most recent call last):
-  File &amp;quot;&amp;lt;stdin&amp;gt;&amp;quot;, line 1, in &amp;lt;module&amp;gt;
-TypeError: blues_singer() takes exactly 3 arguments (2 given)
-&amp;gt;&amp;gt;&amp;gt;
-&amp;gt;&amp;gt;&amp;gt; args = (&#39;Bessie Smith&#39;, &#39;15th April 1894&#39;, &#39;26th September 1937&#39;, &#39;Gimme a Pigfoot and a Bottle of Beer&#39;)
-&amp;gt;&amp;gt;&amp;gt;
-&amp;gt;&amp;gt;&amp;gt; blues_singer(*args)
-Traceback (most recent call last):
-  File &amp;quot;&amp;lt;stdin&amp;gt;&amp;quot;, line 1, in &amp;lt;module&amp;gt;
-TypeError: blues_singer() takes exactly 3 arguments (4 given)
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;Just the same as if &lt;code&gt;*args&lt;/code&gt; wasn&amp;rsquo;t being used.
-As before, using &lt;code&gt;**kwargs&lt;/code&gt; is the same, except we pass a dictionary to the function:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;&amp;gt;&amp;gt;&amp;gt; def blues_singer(name, born, died):
-...      print name + &#39; was born on &#39; + born + &#39; and died on &#39; + died
-...
-&amp;gt;&amp;gt;&amp;gt; kwargs = {&#39;name&#39;:&#39;Memphis Minnie&#39;, &#39;born&#39;:&#39;3rd June 1897&#39;, &#39;died&#39;:&#39;6th August 1973&#39;}
-&amp;gt;&amp;gt;&amp;gt;
-&amp;gt;&amp;gt;&amp;gt; blues_singer(**kwargs)
-Memphis Minnie was born on 3rd June 1897 and died on 6th August 1973
-&amp;gt;&amp;gt;&amp;gt;
-&amp;gt;&amp;gt;&amp;gt; # We can also pass in the values as a combination of formal parameters and a `kwargs` dictionary
-&amp;gt;&amp;gt;&amp;gt;
-&amp;gt;&amp;gt;&amp;gt; kwargs = {&#39;born&#39;:&#39;3rd June 1897&#39;, &#39;died&#39;:&#39;6th August 1973&#39;}
-&amp;gt;&amp;gt;&amp;gt;
-&amp;gt;&amp;gt;&amp;gt; blues_singer(name=&#39;Memphis Minnie&#39;, **kwargs)
-Memphis Minnie was born on 3rd June 1897 and died on 6th August 1973
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;So, that&amp;rsquo;s that, then.&lt;/p&gt;
-
-&lt;p&gt;In writing this post I borrowed heavily from:&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;a href=&#34;http://agiliq.com/blog/2012/06/understanding-args-and-kwargs/&#34;&gt;Agiliq&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;&lt;a href=&#34;http://book.pythontips.com/en/latest/args_and_kwargs.html&#34;&gt;Python Tips&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;&lt;a href=&#34;https://stackoverflow.com/questions/3394835/args-and-kwargs&#34;&gt;Stack Overflow&lt;/a&gt; (of course!)&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;Many thanks to these folks for helping me to understand this.&lt;/p&gt;
-</description>
-    </item>
-    
-    <item>
-      <title>Sister Rosetta Tharpe: Didn&#39;t It Rain</title>
-      <link>/post/2015-08-25-sister-rosetta-tharpe-didnt-it-rain/</link>
-      <pubDate>Tue, 25 Aug 2015 00:00:00 +0000</pubDate>
-      
-      <guid>/post/2015-08-25-sister-rosetta-tharpe-didnt-it-rain/</guid>
-      <description>&lt;iframe width=&#34;640&#34; height=&#34;360&#34; src=&#34;https://www.youtube.com/embed/SR2gR6SZC2M&#34; frameborder=&#34;0&#34;&gt; &lt;/iframe&gt;
-</description>
-    </item>
-    
-    <item>
-      <title>Notes on Node.js: Dipping My Toes In</title>
-      <link>/post/2015-08-21-node-dipping-toes/</link>
-      <pubDate>Fri, 21 Aug 2015 00:00:00 +0000</pubDate>
-      
-      <guid>/post/2015-08-21-node-dipping-toes/</guid>
-      <description>&lt;p&gt;I started using &lt;a href=&#34;http://exercism.io/&#34;&gt;exercism.io&lt;/a&gt; this morning after hearing about it on &lt;a href=&#34;http://www.codenewbie.org/podcast/nitpicks-and-devils&#34;&gt;Code Newbies&lt;/a&gt;, mainly to get more practice with Python.  I&amp;rsquo;m also learning JavaScript as well and, seeing there was a JS track, I thought I&amp;rsquo;d have a glance at it, and inadvertently started using node.js, something I&amp;rsquo;ve wanted to do for a while now.  I got that new &lt;em&gt;&amp;lsquo;don&amp;rsquo;t quite understand but feel real excited&amp;rsquo;&lt;/em&gt; feeling.&lt;/p&gt;
-
-&lt;p&gt;As far as my understanding goes node.js is basically JavaScript, the programming language of the web, on a computer, desktop/laptop/server etc., rather than in a browser. It&amp;rsquo;s easy enough to work out how to install node.js so I won&amp;rsquo;t go into that here.
-I started out with a &lt;code&gt;Hello World&lt;/code&gt; exercise, as you do.  I gotta say, it looked strange, no &lt;code&gt;$(document).ready()&lt;/code&gt; here, and I did end up sneaking a peek &lt;a href=&#34;https://github.com/exercism/xjavascript/blob/master/hello-world/example.js&#34;&gt;here&lt;/a&gt;.  I really didn&amp;rsquo;t know where to start with fixing the given code to make the tests pass, my mind was going down overly complicated unorganised paths, and I figured I&amp;rsquo;d be better off working backwards.  Which is what this will be a part of, break apart the code, understand the parts.&lt;/p&gt;
-
-&lt;p&gt;So, anyway, this is the code.&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-javascript&#34;&gt;&#39;use strict&#39;;
-
-var HelloWorld = function() {};
-
-HelloWorld.prototype.hello = function(name) {
-  name = name || &#39;world&#39;;
-  return &#39;Hello, &#39; + name + &#39;!&#39;;
-};
-
-module.exports = HelloWorld;
-
-var helloWorld = new HelloWorld();
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;The &lt;code&gt;var&lt;/code&gt; &amp;amp; &lt;code&gt;function&lt;/code&gt; stuff I understand, but &lt;code&gt;strict&lt;/code&gt;? &lt;code&gt;prototypes&lt;/code&gt;? &lt;code&gt;module.exports&lt;/code&gt;? Wha&amp;rsquo;fu&amp;rsquo;?&lt;/p&gt;
-
-&lt;p&gt;What was interesting was running it.  Just like Python really; &lt;code&gt;node .\hello-world.js&lt;/code&gt; in the CLI.  Let&amp;rsquo;s stick a &lt;code&gt;console.log(&#39;Hello node, whaddya know?&#39;)&lt;/code&gt; in there:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-javascript&#34;&gt; &amp;gt; node .\hello-world.js
-Hello node, whaddya know?
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;Cool, huh? And to run the tests:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-javascript&#34;&gt; &amp;gt; jasmine-node .\hello-world.js
-
-
-Finished in 0 seconds
-0 tests, 0 assertions, 0 failures, 0 skipped
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;So, it&amp;rsquo;s basic, it&amp;rsquo;s obvious, but it&amp;rsquo;s blowin&amp;rsquo; my mind just a bit.  I&amp;rsquo;m well excited to get started with this and explore it further.  I&amp;rsquo;m gonna go over this little code snippet and work it out as best I can, and then who knows, maybe I&amp;rsquo;ll get a MEAN stack up and running for my &lt;em&gt;new awesome web app idea&lt;/em&gt;.&lt;/p&gt;
 </description>
     </item>
     

@@ -1,8 +1,7 @@
 ---
-layout: post
 title: "Notes on Elixir: Upgrading to/Installing v1.2 on Ubuntu"
-tags: elixir
-
+date: 2016-01-06
+tags: [ "elixir" ]
 ---
 
 **EDIT:** Erlang solutions has

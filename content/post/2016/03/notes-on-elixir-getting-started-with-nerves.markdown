@@ -1,8 +1,7 @@
 ---
 title: "Notes on Elixir: Getting Started with Nerves"
-layout: post
-tags: elixir nerves
-
+date: 2015-03-02
+tags: [ "elixir", "nerves" ]
 ---
 
 This week I got my first Raspberry Pi, so of course I set up a wicked cool media

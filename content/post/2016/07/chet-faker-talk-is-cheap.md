@@ -1,8 +1,7 @@
 ---
-layout: post
 title:  "Songs to Code to: Talk Is Cheap"
 date:   2016-07-26
-tags:   music
+tags:   [ "music" ]
 ---
 
 <iframe width="640" height="360" src="https://www.youtube.com/embed/aP_-P_BS6KY" frameborder="0"> </iframe>

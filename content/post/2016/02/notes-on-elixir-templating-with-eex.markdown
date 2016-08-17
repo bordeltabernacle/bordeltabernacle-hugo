@@ -1,8 +1,7 @@
 ---
 title: "Notes on Elixir: Templating with EEx"
-layout: post
-tags: elixir
-
+date: 2016-02-12
+tags: [ "elixir" ]
 ---
 
 EEx is to Elixir what [Jinja][j] is to Python.  It enables the use of Elixir

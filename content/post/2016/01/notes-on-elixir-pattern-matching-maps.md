@@ -1,8 +1,7 @@
 ---
-layout: post
 title: "Notes on Elixir: Pattern-Matching Maps"
-tags: elixir
-
+date: 2016-01-04
+tags: [ "elixir" ]
 ---
 
 Following on from my [last post][nopm] about pattern-matching, `maps`, the main

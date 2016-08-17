@@ -18,7 +18,7 @@ body {
 }
 /* Blocks */
 header {
-	border-right: 1px #eee solid;
+	/* border-right: 1px #eee solid; */
 	padding: 2em;
     padding-right: 60px;
 	position:fixed;
@@ -182,7 +182,7 @@ h3.post-title {
 	margin-top:0.4em;
 	padding-bottom:0.9em;
 	border-bottom: 1px solid #eee;
-	font-size: 1.4em;
+	font-size: 1.1em;
 	color: #444;
 }
 .post-title .feature-star {
