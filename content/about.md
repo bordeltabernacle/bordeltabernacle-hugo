@@ -1,5 +1,4 @@
 +++
-categories = ["misc"]
 date = "2016-08-12T16:16:07+01:00"
 title = "about"
 
@@ -17,9 +16,5 @@ wanted to arm myself with as many skills as possible.  Luckily, through some
 perseverance, luck and kindness from others, before completing my MSc I started
 working for a large UK VAR as an Alpha/Beta Testing Lab Engineer. Very quickly,
 because of the little Python knowledge I had, I became the *'Scripting Guy'*,
-something that unnerved me at first, but that I quickly embraced. And in late 2015
-my boss agreed that my job title should be changed to Developer. And, [now][now].
+something that unnerved me at first, but that I quickly embraced.
 
-<p class="post-meta">
-<a href="mailto:{{ site.email }}">{{ site.email }}</a>
-</p>
