@@ -6,25 +6,811 @@
     <description>Recent content in Posts on bordeltabernacle</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-gb</language>
-    <lastBuildDate>Fri, 25 Sep 2015 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Thu, 11 Aug 2016 00:00:00 +0000</lastBuildDate>
     <atom:link href="/post/index.xml" rel="self" type="application/rss+xml" />
     
     <item>
+      <title>Network Automation with Ansible Playbooks</title>
+      <link>/post/2016/08/network-automation-with-ansible-playbooks/</link>
+      <pubDate>Thu, 11 Aug 2016 00:00:00 +0000</pubDate>
+      
+      <guid>/post/2016/08/network-automation-with-ansible-playbooks/</guid>
+      <description>&lt;p&gt;Following on from my &lt;a href=&#34;https://bordeltabernacle.github.io/2016/08/01/starting-out-with-ansible-cisco-and-network-automation.html&#34;&gt;previous post&lt;/a&gt;, I want to take a look at &lt;em&gt;playbooks&lt;/em&gt;,
+the mechanism Ansible uses for building and managing task automation. Playbooks
+are text files that declare the tasks you want carried out in a series of
+&lt;em&gt;plays&lt;/em&gt;. This text file can then easily be re-used, shared, and version controlled.
+Let&amp;rsquo;s have a look at how we use them then, yeah?&lt;/p&gt;
+
+&lt;p&gt;Okay, so &lt;a href=&#34;https://bordeltabernacle.github.io/2016/08/01/starting-out-with-ansible-cisco-and-network-automation.html&#34;&gt;previously&lt;/a&gt; we had an inventory file that listed the hosts in our
+lab network.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-ini&#34;&gt;[routers]
+router-one ansible_host=192.168.0.1
+router-two ansible_host=192.168.0.2
+router-three ansible_host=192.168.0.3
+
+[routers:vars]
+ansible_user=vagrant
+ansible_password=vagrant
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Let&amp;rsquo;s add our first playbook.  Playbooks are written as &lt;em&gt;yaml&lt;/em&gt; files, a format equivalent to &lt;em&gt;json&lt;/em&gt; or &lt;em&gt;xml&lt;/em&gt; but intended to be more human readable. Be warned, &lt;em&gt;yaml&lt;/em&gt; is very particular about whitespace. If we create a new file alongside out playbook called &lt;code&gt;get_inventory_info.yaml&lt;/code&gt;, we&amp;rsquo;ll use it to get the output from a &lt;code&gt;show inventory&lt;/code&gt; command.&lt;/p&gt;
+
+&lt;p&gt;{% raw %}&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-yaml&#34;&gt;---
+- name: Get Inventory Information
+  hosts: routers
+  tasks:
+    - name: Send Show Inventory Command
+      ios_command:
+        host: &amp;quot;{{ ansible_host }}&amp;quot;
+        username: &amp;quot;{{ ansible_user }}&amp;quot;
+        password: &amp;quot;{{ ansible_password }}&amp;quot;
+        commands:
+          - show inventory
+      register: inventory
+    - debug: var=inventory
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;{% endraw %}&lt;/p&gt;
+
+&lt;p&gt;So, what&amp;rsquo;s going on here?&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;---&lt;/code&gt; indicates that it&amp;rsquo;s a &lt;em&gt;yaml&lt;/em&gt; file.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;name: Get Inventory Information&lt;/code&gt; is the name of our playbook&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;hosts: routers&lt;/code&gt; is the devices we want to target&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;tasks:&lt;/code&gt; what follows is the list of tasks we want to carry out&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;name: Send Show Inventory Command&lt;/code&gt; is the name of our task&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ios_command:&lt;/code&gt; this is &lt;a href=&#34;https://docs.ansible.com/ansible/ios_command_module.html&#34;&gt;the module&lt;/a&gt; we are using&lt;/li&gt;
+&lt;li&gt;{% raw %}&lt;code&gt;host: &amp;quot;{{ ansible_host }}&amp;quot;&lt;/code&gt;{% endraw %}, {% raw %}&lt;code&gt;username: &amp;quot;{{ ansible_user }}&amp;quot;&lt;/code&gt;{% endraw %} &amp;amp; {% raw %}&lt;code&gt;password: &amp;quot;{{ ansible_password }}&amp;quot;&lt;/code&gt;{% endraw %} are the connection details we&amp;rsquo;re going to use. The {% raw %}&lt;code&gt;{{ }}&lt;/code&gt;{% endraw %} means that this is a variable. All variables exist within the Ansible environment you&amp;rsquo;re in, in this case these variables are from the &lt;em&gt;inventory&lt;/em&gt; file above. Doing this means we can loop through all the hosts in our &lt;em&gt;routers&lt;/em&gt; group, and they can have different username/password combinations if needs be.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;commands: - show inventory&lt;/code&gt; is the command we&amp;rsquo;ll be using.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;register: inventory&lt;/code&gt; here we&amp;rsquo;re storing the output of the task in the variable &lt;code&gt;inventory&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;debug: var=inventory&lt;/code&gt; this will output the variable &lt;code&gt;inventory&lt;/code&gt; to our terminal.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;To run this we use the &lt;code&gt;ansible-playbook&lt;/code&gt; command, along with the name of our playbook and the &lt;code&gt;-i&lt;/code&gt; flag to specify our inventory.&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;ansible-playbook get_inventory_info.yaml -i inventory&lt;/code&gt;&lt;/p&gt;
+
+&lt;p&gt;OK, let&amp;rsquo;s go&amp;hellip;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-json&#34;&gt;PLAY [Get Inventory Information] ***********************************************
+
+TASK [setup] *******************************************************************
+fatal: [router-one]: UNREACHABLE! =&amp;gt; {&amp;quot;changed&amp;quot;: false, &amp;quot;msg&amp;quot;: &amp;quot;SSH Error: data could not be sent to the remote host. Make sure this host can be reached over ssh&amp;quot;, &amp;quot;unreachable&amp;quot;: true}
+fatal: [router-two]: UNREACHABLE! =&amp;gt; {&amp;quot;changed&amp;quot;: false, &amp;quot;msg&amp;quot;: &amp;quot;SSH Error: data could not be sent to the remote host. Make sure this host can be reached over ssh&amp;quot;, &amp;quot;unreachable&amp;quot;: true}
+fatal: [router-three]: UNREACHABLE! =&amp;gt; {&amp;quot;changed&amp;quot;: false, &amp;quot;msg&amp;quot;: &amp;quot;SSH Error: data could not be sent to the remote host. Make sure this host can be reached over ssh&amp;quot;, &amp;quot;unreachable&amp;quot;: true}
+
+PLAY RECAP *********************************************************************
+router-one                : ok=0    changed=0    unreachable=1    failed=0
+router-two               : ok=0    changed=0    unreachable=1    failed=0
+router-three             : ok=0    changed=0    unreachable=1    failed=0
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Arggh, whaa? This is because we&amp;rsquo;re dealing with Cisco pets not server cattle. As I mentioned before, Ansible is trying to run some Python code on our hosts, which is not going to happen with Cisco IOS, we need to run the code on our local machine. So let&amp;rsquo;s add the following to our &lt;em&gt;inventory&lt;/em&gt; file:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-ini&#34;&gt;[routers:vars]
+ansible_connection=local
+ansible_user=vagrant
+ansible_password=vagrant
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;That line there, &lt;code&gt;ansible_connection=local&lt;/code&gt;, should take care of this problem for us.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-json&#34;&gt;PLAY [Get Inventory Information] ***********************************************
+
+TASK [setup] *******************************************************************
+ok: [router-one]
+ok: [router-one]
+ok: [router-two]
+
+TASK [Send Show Inventory Command] *********************************************
+ok: [router-one]
+ok: [router-one]
+ok: [router-two]
+
+TASK [debug] *******************************************************************
+ok: [router-two] =&amp;gt; {
+    &amp;quot;output&amp;quot;: {
+        &amp;quot;changed&amp;quot;: false,
+        &amp;quot;stdout&amp;quot;: [
+            &amp;quot;NAME: \&amp;quot;CISCO2921/K9\&amp;quot;, DESCR: \&amp;quot;CISCO2921/K9 chassis, Hw Serial#: FCZ1545706V, Hw Revision: 1.0\&amp;quot;\nPID: CISCO2921/K9      , VID: V05 , SN: FCZ1545706V\n\nNAME: \&amp;quot;C2921/C2951 AC Power Supply\&amp;quot;, DESCR: \&amp;quot;C2921/C2951 AC Power Supply\&amp;quot;\nPID: PWR-2921-51-AC    , VID: V02 , SN: DCA1536K3WX\n\n&amp;quot;
+        ],
+        &amp;quot;stdout_lines&amp;quot;: [
+            [
+                &amp;quot;NAME: \&amp;quot;CISCO2921/K9\&amp;quot;, DESCR: \&amp;quot;CISCO2921/K9 chassis, Hw Serial#: FCZ1545706V, Hw Revision: 1.0\&amp;quot;&amp;quot;,
+                &amp;quot;PID: CISCO2921/K9      , VID: V05 , SN: FCZ1545706V&amp;quot;,
+                &amp;quot;&amp;quot;,
+                &amp;quot;NAME: \&amp;quot;C2921/C2951 AC Power Supply\&amp;quot;, DESCR: \&amp;quot;C2921/C2951 AC Power Supply\&amp;quot;&amp;quot;,
+                &amp;quot;PID: PWR-2921-51-AC    , VID: V02 , SN: DCA1536K3WX&amp;quot;,
+                &amp;quot;&amp;quot;,
+                &amp;quot;&amp;quot;
+            ]
+        ]
+    }
+}
+ok: [router-two] =&amp;gt; {
+    &amp;quot;output&amp;quot;: {
+        &amp;quot;changed&amp;quot;: false,
+        &amp;quot;stdout&amp;quot;: [
+            &amp;quot;NAME: \&amp;quot;CISCO2921/K9\&amp;quot;, DESCR: \&amp;quot;CISCO2921/K9 chassis, Hw Serial#: FCZ192570GZ, Hw Revision: 1.0\&amp;quot;\nPID: CISCO2921/K9      , VID: V08 , SN: FCZ192570GZ\n\nNAME: \&amp;quot;C2921/C2951 AC Power Supply\&amp;quot;, DESCR: \&amp;quot;C2921/C2951 AC Power Supply\&amp;quot;\nPID: PWR-2921-51-AC    , VID: V03 , SN: QCS19060PYS\n\n&amp;quot;
+        ],
+        &amp;quot;stdout_lines&amp;quot;: [
+            [
+                &amp;quot;NAME: \&amp;quot;CISCO2921/K9\&amp;quot;, DESCR: \&amp;quot;CISCO2921/K9 chassis, Hw Serial#: FCZ192570GZ, Hw Revision: 1.0\&amp;quot;&amp;quot;,
+                &amp;quot;PID: CISCO2921/K9      , VID: V08 , SN: FCZ192570GZ&amp;quot;,
+                &amp;quot;&amp;quot;,
+                &amp;quot;NAME: \&amp;quot;C2921/C2951 AC Power Supply\&amp;quot;, DESCR: \&amp;quot;C2921/C2951 AC Power Supply\&amp;quot;&amp;quot;,
+                &amp;quot;PID: PWR-2921-51-AC    , VID: V03 , SN: QCS19060PYS&amp;quot;,
+                &amp;quot;&amp;quot;,
+                &amp;quot;&amp;quot;
+            ]
+        ]
+    }
+}
+ok: [router-three] =&amp;gt; {
+    &amp;quot;output&amp;quot;: {
+        &amp;quot;changed&amp;quot;: false,
+        &amp;quot;stdout&amp;quot;: [
+            &amp;quot;NAME: \&amp;quot;CISCO2921/K9\&amp;quot;, DESCR: \&amp;quot;CISCO2921/K9 chassis, Hw Serial#: FCZ192560EG, Hw Revision: 1.0\&amp;quot;\nPID: CISCO2921/K9      , VID: V08 , SN: FCZ192560EG\n\nNAME: \&amp;quot;C2921/C2951 AC Power Supply\&amp;quot;, DESCR: \&amp;quot;C2921/C2951 AC Power Supply\&amp;quot;\nPID: PWR-2921-51-AC    , VID: V03 , SN: QCS19060RV1\n\n&amp;quot;
+        ],
+        &amp;quot;stdout_lines&amp;quot;: [
+            [
+                &amp;quot;NAME: \&amp;quot;CISCO2921/K9\&amp;quot;, DESCR: \&amp;quot;CISCO2921/K9 chassis, Hw Serial#: FCZ192560EG, Hw Revision: 1.0\&amp;quot;&amp;quot;,
+                &amp;quot;PID: CISCO2921/K9      , VID: V08 , SN: FCZ192560EG&amp;quot;,
+                &amp;quot;&amp;quot;,
+                &amp;quot;NAME: \&amp;quot;C2921/C2951 AC Power Supply\&amp;quot;, DESCR: \&amp;quot;C2921/C2951 AC Power Supply\&amp;quot;&amp;quot;,
+                &amp;quot;PID: PWR-2921-51-AC    , VID: V03 , SN: QCS19060RV1&amp;quot;,
+                &amp;quot;&amp;quot;,
+                &amp;quot;&amp;quot;
+            ]
+        ]
+    }
+}
+
+PLAY RECAP *********************************************************************
+router-one                : ok=3    changed=0    unreachable=0    failed=0
+router-two                : ok=3    changed=0    unreachable=0    failed=0
+router-three              : ok=3    changed=0    unreachable=0    failed=0
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Yessss! Job&amp;rsquo;s a good &amp;lsquo;un, let&amp;rsquo;s go home.
+Nah, not yet. We can smooth things out a bit. At the beginning of the output you can see a &lt;code&gt;[setup]&lt;/code&gt; task being run, that is an Ansible default that gathers facts from the hosts, like operating system, ip address etc. However, because we&amp;rsquo;re using &lt;code&gt;ansible_connection=local&lt;/code&gt; this task is just gathering facts from the local machine, 3 times in this case! Totally useless. So we can add &lt;code&gt;gather_facts: no&lt;/code&gt; to our playbook to avoid this time waster. We also don&amp;rsquo;t need all of that output so, as this is &lt;em&gt;json&lt;/em&gt; we can be a bit more selective about it by using &lt;code&gt;debug: var=inventory.stdout_lines[0]&lt;/code&gt;. Ansible has a &lt;code&gt;provider&lt;/code&gt; argument which can be a dictionary object which defines the connection to the host, meaning we can separate this information from our playbooks, and not have to repeat it in every playbook. Our playbook now looks like this:&lt;/p&gt;
+
+&lt;p&gt;{% raw %}&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-yaml&#34;&gt;---
+- name: Get Inventory Information
+  gather_facts: no
+  hosts: routers
+  tasks:
+    - name: Send Show Inventory Command
+      ios_command:
+        provider: &amp;quot;{{ provider }}&amp;quot;
+        commands:
+          - show inventory
+      register: inventory
+    - debug: var=inventory.stdout_lines[0]
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;{% endraw %}&lt;/p&gt;
+
+&lt;p&gt;To store group variables, such as &lt;code&gt;provider&lt;/code&gt;, we can use a directory called &lt;em&gt;group_vars&lt;/em&gt;. This directory name is pre-defined by Ansible. Within it we create a &lt;em&gt;yaml&lt;/em&gt; file named after the group, &lt;em&gt;routers&lt;/em&gt;. While we&amp;rsquo;re at it, if we&amp;rsquo;re creating a &lt;em&gt;routers&lt;/em&gt; variable file, we can move the variables out of our inventory into it. So, in &lt;code&gt;group_vars/routers.yaml&lt;/code&gt; we have&amp;hellip;&lt;/p&gt;
+
+&lt;p&gt;{% raw %}&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-yaml&#34;&gt;---
+ansible_connection: local
+ansible_user: vagrant
+ansible_password: vagrant
+provider:
+  host: &amp;quot;{{ ansible_host }}&amp;quot;
+  username: &amp;quot;{{ ansible_user }}&amp;quot;
+  password: &amp;quot;{{ ansible_password }}&amp;quot;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;{% endraw %}&lt;/p&gt;
+
+&lt;p&gt;Really, we shouldn&amp;rsquo;t be writing our password down, should we? So let&amp;rsquo;s delete the &lt;code&gt;ansible_password: vagrant&lt;/code&gt; line and use the command line &lt;code&gt;--ask-pass&lt;/code&gt; flag instead.&lt;/p&gt;
+
+&lt;p&gt;Our inventory file now looks like this, just fyi:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-ini&#34;&gt;[routers]
+192.168.0.1
+192.168.0.2
+192.168.0.3
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;I&amp;rsquo;ve removed the hostnames, just because, it doesn&amp;rsquo;t really change anything, except the names in the output.
+If we run &lt;code&gt;ansible-playbook get_inventory_info.yaml -i inventory --ask-pass&lt;/code&gt; we get a prompt for the password&amp;hellip;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-json&#34;&gt;SSH password:
+
+PLAY [Get Inventory Information] ***********************************************
+
+TASK [Send Show Inventory Command] *********************************************
+ok: [192.168.0.2]
+ok: [192.168.0.3]
+ok: [192.168.0.1]
+
+TASK [debug] *******************************************************************
+ok: [192.168.0.1] =&amp;gt; {
+    &amp;quot;inventory.stdout_lines[0]&amp;quot;: [
+        &amp;quot;NAME: \&amp;quot;CISCO2921/K9\&amp;quot;, DESCR: \&amp;quot;CISCO2921/K9 chassis, Hw Serial#: FCZ1545706V, Hw Revision: 1.0\&amp;quot;&amp;quot;,
+        &amp;quot;PID: CISCO2921/K9      , VID: V05 , SN: FCZ1545706V&amp;quot;,
+        &amp;quot;&amp;quot;,
+        &amp;quot;NAME: \&amp;quot;C2921/C2951 AC Power Supply\&amp;quot;, DESCR: \&amp;quot;C2921/C2951 AC Power Supply\&amp;quot;&amp;quot;,
+        &amp;quot;PID: PWR-2921-51-AC    , VID: V02 , SN: DCA1536K3WX&amp;quot;,
+        &amp;quot;&amp;quot;,
+        &amp;quot;&amp;quot;
+    ]
+}
+ok: [192.168.0.2] =&amp;gt; {
+    &amp;quot;inventory.stdout_lines[0]&amp;quot;: [
+        &amp;quot;NAME: \&amp;quot;CISCO2921/K9\&amp;quot;, DESCR: \&amp;quot;CISCO2921/K9 chassis, Hw Serial#: FCZ192570GZ, Hw Revision: 1.0\&amp;quot;&amp;quot;,
+        &amp;quot;PID: CISCO2921/K9      , VID: V08 , SN: FCZ192570GZ&amp;quot;,
+        &amp;quot;&amp;quot;,
+        &amp;quot;NAME: \&amp;quot;C2921/C2951 AC Power Supply\&amp;quot;, DESCR: \&amp;quot;C2921/C2951 AC Power Supply\&amp;quot;&amp;quot;,
+        &amp;quot;PID: PWR-2921-51-AC    , VID: V03 , SN: QCS19060PYS&amp;quot;,
+        &amp;quot;&amp;quot;,
+        &amp;quot;&amp;quot;
+    ]
+}
+ok: [192.168.0.3] =&amp;gt; {
+    &amp;quot;inventory.stdout_lines[0]&amp;quot;: [
+        &amp;quot;NAME: \&amp;quot;CISCO2921/K9\&amp;quot;, DESCR: \&amp;quot;CISCO2921/K9 chassis, Hw Serial#: FCZ192560EG, Hw Revision: 1.0\&amp;quot;&amp;quot;,
+        &amp;quot;PID: CISCO2921/K9      , VID: V08 , SN: FCZ192560EG&amp;quot;,
+        &amp;quot;&amp;quot;,
+        &amp;quot;NAME: \&amp;quot;C2921/C2951 AC Power Supply\&amp;quot;, DESCR: \&amp;quot;C2921/C2951 AC Power Supply\&amp;quot;&amp;quot;,
+        &amp;quot;PID: PWR-2921-51-AC    , VID: V03 , SN: QCS19060RV1&amp;quot;,
+        &amp;quot;&amp;quot;,
+        &amp;quot;&amp;quot;
+    ]
+}
+
+PLAY RECAP *********************************************************************
+192.168.0.1                : ok=2    changed=0    unreachable=0    failed=0
+192.168.0.2                : ok=2    changed=0    unreachable=0    failed=0
+192.168.0.3                : ok=2    changed=0    unreachable=0    failed=0
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;There, that&amp;rsquo;s a bit clearer. If we want we can add a few commands in to our playbook. Let&amp;rsquo;s change the name of it to &lt;code&gt;get_device_information.yaml&lt;/code&gt; and change it to this:&lt;/p&gt;
+
+&lt;p&gt;{% raw %}&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-yaml&#34;&gt;---
+- name: Get Device Information
+  gather_facts: no
+  hosts: routers
+  tasks:
+    - name: Send Show Commands
+      ios_command:
+        provider: &amp;quot;{{ provider }}&amp;quot;
+        commands:
+          - show inventory
+          - sh run | inc hostname
+          - sh ver | inc image
+          - sh ip int brief
+      register: info
+    - debug: var=info.stdout_lines
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;{% endraw %}&lt;/p&gt;
+
+&lt;p&gt;Run it. &lt;code&gt;ansible-playbook get_device_info.yaml -i inventory --ask-pass&lt;/code&gt; and a brief moment later&amp;hellip;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-json&#34;&gt;SSH password:
+
+PLAY [Get Device Information] **************************************************
+
+TASK [Send Show Commands] ******************************************************
+ok: [192.168.0.3]
+ok: [192.168.0.1]
+ok: [192.168.0.2]
+
+TASK [debug] *******************************************************************
+ok: [192.168.0.1] =&amp;gt; {
+    &amp;quot;info.stdout_lines&amp;quot;: [
+        [
+            &amp;quot;NAME: \&amp;quot;CISCO2921/K9\&amp;quot;, DESCR: \&amp;quot;CISCO2921/K9 chassis, Hw Serial#: FCZ1545706V, Hw Revision: 1.0\&amp;quot;&amp;quot;,
+            &amp;quot;PID: CISCO2921/K9      , VID: V05 , SN: FCZ1545706V&amp;quot;,
+            &amp;quot;&amp;quot;,
+            &amp;quot;NAME: \&amp;quot;C2921/C2951 AC Power Supply\&amp;quot;, DESCR: \&amp;quot;C2921/C2951 AC Power Supply\&amp;quot;&amp;quot;,
+            &amp;quot;PID: PWR-2921-51-AC    , VID: V02 , SN: DCA1536K3WX&amp;quot;,
+            &amp;quot;&amp;quot;,
+            &amp;quot;&amp;quot;
+        ],
+        [
+            &amp;quot;hostname router-one&amp;quot;
+        ],
+        [
+            &amp;quot;System image file is \&amp;quot;flash0:c2900-IMAGE-ONE.SPA.154-3.M3.bin\&amp;quot;&amp;quot;
+        ],
+        [
+            &amp;quot;Interface                  IP-Address      OK? Method Status                Protocol&amp;quot;,
+            &amp;quot;Embedded-Service-Engine0/0 unassigned      YES NVRAM  administratively down down    &amp;quot;,
+            &amp;quot;GigabitEthernet0/0         192.168.0.1     YES NVRAM  up                    up      &amp;quot;,
+            &amp;quot;GigabitEthernet0/1         10.10.10.11     YES manual down                  down    &amp;quot;,
+            &amp;quot;GigabitEthernet0/2         unassigned      YES NVRAM  administratively down down    &amp;quot;
+        ]
+    ]
+}
+ok: [192.168.0.3] =&amp;gt; {
+    &amp;quot;info.stdout_lines&amp;quot;: [
+        [
+            &amp;quot;NAME: \&amp;quot;CISCO2921/K9\&amp;quot;, DESCR: \&amp;quot;CISCO2921/K9 chassis, Hw Serial#: FCZ192560EG, Hw Revision: 1.0\&amp;quot;&amp;quot;,
+            &amp;quot;PID: CISCO2921/K9      , VID: V08 , SN: FCZ192560EG&amp;quot;,
+            &amp;quot;&amp;quot;,
+            &amp;quot;NAME: \&amp;quot;C2921/C2951 AC Power Supply\&amp;quot;, DESCR: \&amp;quot;C2921/C2951 AC Power Supply\&amp;quot;&amp;quot;,
+            &amp;quot;PID: PWR-2921-51-AC    , VID: V03 , SN: QCS19060RV1&amp;quot;,
+            &amp;quot;&amp;quot;,
+            &amp;quot;&amp;quot;
+        ],
+        [
+            &amp;quot;hostname router-three&amp;quot;
+        ],
+        [
+            &amp;quot;System image file is \&amp;quot;flash0:c2900-IMAGE-ONE.SPA.154-3.M3.bin\&amp;quot;&amp;quot;
+        ],
+        [
+            &amp;quot;Interface                  IP-Address      OK? Method Status                Protocol&amp;quot;,
+            &amp;quot;Embedded-Service-Engine0/0 unassigned      YES NVRAM  administratively down down    &amp;quot;,
+            &amp;quot;GigabitEthernet0/0         192.168.0.3     YES NVRAM  up                    up      &amp;quot;,
+            &amp;quot;GigabitEthernet0/1         10.10.10.13     YES manual down                  down    &amp;quot;,
+            &amp;quot;GigabitEthernet0/2         unassigned      YES NVRAM  administratively down down    &amp;quot;
+        ]
+    ]
+}
+ok: [192.168.0.2] =&amp;gt; {
+    &amp;quot;info.stdout_lines&amp;quot;: [
+        [
+            &amp;quot;NAME: \&amp;quot;CISCO2921/K9\&amp;quot;, DESCR: \&amp;quot;CISCO2921/K9 chassis, Hw Serial#: FCZ192570GZ, Hw Revision: 1.0\&amp;quot;&amp;quot;,
+            &amp;quot;PID: CISCO2921/K9      , VID: V08 , SN: FCZ192570GZ&amp;quot;,
+            &amp;quot;&amp;quot;,
+            &amp;quot;NAME: \&amp;quot;C2921/C2951 AC Power Supply\&amp;quot;, DESCR: \&amp;quot;C2921/C2951 AC Power Supply\&amp;quot;&amp;quot;,
+            &amp;quot;PID: PWR-2921-51-AC    , VID: V03 , SN: QCS19060PYS&amp;quot;,
+            &amp;quot;&amp;quot;,
+            &amp;quot;&amp;quot;
+        ],
+        [
+            &amp;quot;hostname router-two&amp;quot;
+        ],
+        [
+            &amp;quot;System image file is \&amp;quot;flash0:c2900-IMAGE-ONE.SPA.154-3.M3.bin\&amp;quot;&amp;quot;
+        ],
+        [
+            &amp;quot;Interface                  IP-Address      OK? Method Status                Protocol&amp;quot;,
+            &amp;quot;Embedded-Service-Engine0/0 unassigned      YES NVRAM  administratively down down    &amp;quot;,
+            &amp;quot;GigabitEthernet0/0         192.168.0.2     YES NVRAM  up                    up      &amp;quot;,
+            &amp;quot;GigabitEthernet0/1         10.10.10.12     YES manual down                  down    &amp;quot;,
+            &amp;quot;GigabitEthernet0/2         unassigned      YES NVRAM  administratively down down    &amp;quot;
+        ]
+    ]
+}
+
+PLAY RECAP *********************************************************************
+192.168.0.1                : ok=2    changed=0    unreachable=0    failed=0
+192.168.0.2                : ok=2    changed=0    unreachable=0    failed=0
+192.168.0.3                : ok=2    changed=0    unreachable=0    failed=0
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Lovely, &lt;em&gt;now&lt;/em&gt; we can go home.&lt;/p&gt;
+
+&lt;p&gt;There&amp;rsquo;s more to do here, such as saving this output to file &amp;amp; sending configuration changes, but we can do that later.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Songs to Code to: Flesh Without Blood</title>
+      <link>/post/2016/08/grimes-flesh-without-blood/</link>
+      <pubDate>Thu, 11 Aug 2016 00:00:00 +0000</pubDate>
+      
+      <guid>/post/2016/08/grimes-flesh-without-blood/</guid>
+      <description>&lt;iframe width=&#34;640&#34; height=&#34;360&#34; src=&#34;https://www.youtube.com/embed/Tv9YoYCKNoE&#34; frameborder=&#34;0&#34;&gt; &lt;/iframe&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Using Vagrant to set up an Ansible Environment</title>
+      <link>/post/2016-08-03-using-vagrant-set-up-ansible-environment/</link>
+      <pubDate>Wed, 03 Aug 2016 00:00:00 +0000</pubDate>
+      
+      <guid>/post/2016-08-03-using-vagrant-set-up-ansible-environment/</guid>
+      <description>&lt;p&gt;Vagrant is a tool for creating, managing and sharing Virtual Machines. It&amp;rsquo;s
+really helpful for creating contained environments with specific requirements
+that can be easily built up, tore down and shared with others. It&amp;rsquo;s especially
+helpful if, like me, you have to spend time working on a Windows laptop, because,
+well, Enterprise.&lt;/p&gt;
+
+&lt;p&gt;Following on from my &lt;a href=&#34;https://bordeltabernacle.github.io/2016/08/01/starting-out-with-ansible-cisco-and-network-automation.html&#34;&gt;previous post&lt;/a&gt;,
+I&amp;rsquo;ve found that Vagrant is a fairly painless way to expose the network engineers
+I work with to Ansible. Once it&amp;rsquo;s installed, I can share a zip file for them to
+unzip and run &lt;code&gt;vagrant up&lt;/code&gt; and &lt;code&gt;vagrant ssh&lt;/code&gt; from the command line, and they&amp;rsquo;re
+in a working Ansible environment. And if they mess something up, they can just
+destroy it and start again, no bother. Let&amp;rsquo;s get set up&amp;hellip;&lt;/p&gt;
+
+&lt;p&gt;Vagrant manages VM&amp;rsquo;s through a hypervisor, with the default being Virtualbox,
+though you can use VMware if you have the extra cash. Therefore we need to
+install Virtualbox first, from &lt;a href=&#34;https://www.virtualbox.org/wiki/Downloads&#34;&gt;here&lt;/a&gt;.
+We&amp;rsquo;re going ot grab the Windows &lt;code&gt;.exe&lt;/code&gt; file.  Double click on it, and follow
+the defaults through to the end.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;{{ site.url }}/images/vbox_download.png&#34; alt=&#34;vbox_download&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Now we can install Vagrant, from &lt;a href=&#34;https://www.vagrantup.com/downloads.html&#34;&gt;here&lt;/a&gt;,
+grabbing the Windows &lt;code&gt;.msi&lt;/code&gt; file, double clicking on it once it&amp;rsquo;s downloaded and
+following the defaults.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;{{ site.url }}/images/vagrant_download.png&#34; alt=&#34;vagrant_download&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Vagrant is a command line tool, so you&amp;rsquo;re gonna have to be comfortable on the
+command line, not too much, just enough to know what it is, how to access it
+and how to navigate the directory structure, whether it&amp;rsquo;s through &lt;code&gt;cmd.exe&lt;/code&gt; or
+Powershell. I&amp;rsquo;m not going to go into any of that here, but I would recommend
+getting &lt;a href=&#34;http://cmder.net/&#34;&gt;cmder&lt;/a&gt; if you&amp;rsquo;re going to spend any sort of time
+on the Windows command line.&lt;/p&gt;
+
+&lt;p&gt;So, at your command prompt, if all has been successful you should be able to
+type &lt;code&gt;vagrant --version&lt;/code&gt; and get the version of vagrant you have installed:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;Vagrant 1.8.4
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Grand. The beauty of Vagrant is that it&amp;rsquo;s configured from a simple text file,
+the &lt;em&gt;Vagrantfile&lt;/em&gt;.  To create one, start a new directory, and then, on the
+command line, navigate to within this new directory and type &lt;code&gt;vagrant init&lt;/code&gt;.
+This will create a new, highly commented &lt;em&gt;Vagrantfile&lt;/em&gt;.  Read it, and get an
+idea of what the different options are. Like most things, you often start with
+a bare bones structure like this basic &lt;em&gt;Vagrantfile&lt;/em&gt;, and build it up as you
+learn more and your requirements change. Here I&amp;rsquo;m going to explain the Vagrantfile
+I use to set up my Ansible machine.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-ruby&#34;&gt;# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+vagrant_root = File.dirname(__FILE__)
+project_name = &amp;quot;acp&amp;quot;
+
+Vagrant.configure(2) do |config|
+    config.vm.box = &amp;quot;ubuntu/trusty64&amp;quot;
+    config.vm.box_url = &amp;quot;https://atlas.hashicorp.com/ubuntu/boxes/trusty64&amp;quot;
+    config.vm.provider &amp;quot;virtualbox&amp;quot; do |vb|
+        vb.memory = &amp;quot;1028&amp;quot;
+        vb.cpus = &amp;quot;1&amp;quot;
+    end
+
+    config.vm.define &amp;quot;#{project_name}&amp;quot; do |machine|
+        machine.vm.hostname = &amp;quot;#{project_name}&amp;quot;
+        machine.vm.synced_folder &amp;quot;#{vagrant_root}/shared&amp;quot;, &amp;quot;/home/vagrant/shared&amp;quot;
+        machine.vm.provision :shell, :path =&amp;gt; &amp;quot;#{vagrant_root}/ansible-setup.sh&amp;quot;
+    end
+end
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Vagrant is written in Ruby, and the first two lines are to do with the Ruby language. Next up we have a couple of variables:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-ruby&#34;&gt;vagrant_root = File.dirname(__FILE__)
+project_name = &amp;quot;acp&amp;quot;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;vagrant_root&lt;/code&gt; is the current working directory of the Vagrantfile&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;project_name&lt;/code&gt; is the name of the project, here it is &lt;code&gt;acp&lt;/code&gt; for Ansible Cisco Playground.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;The next section of the &lt;em&gt;Vagrantfile&lt;/em&gt; starts the machine configuration:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-ruby&#34;&gt;config.vm.box = &amp;quot;ubuntu/trusty64&amp;quot;
+config.vm.box_url = &amp;quot;https://atlas.hashicorp.com/ubuntu/boxes/trusty64&amp;quot;
+config.vm.provider &amp;quot;virtualbox&amp;quot; do |vb|
+    vb.memory = &amp;quot;1028&amp;quot;
+    vb.cpus = &amp;quot;1&amp;quot;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;config.vm.box = &amp;quot;ubuntu/trusty64&amp;quot;&lt;/code&gt; defines the base operating system, or Vagrant &lt;em&gt;box&lt;/em&gt;, for the VM, here we&amp;rsquo;re using the official Ubuntu 14.04 Server image, but this can be changed to any one of a multitude of Vagrant &lt;em&gt;boxes&lt;/em&gt;, that can be found &lt;a href=&#34;https://vagrantcloud.com/boxes/search&#34;&gt;here&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;config.vm.box_url = &amp;quot;https://atlas.hashicorp.com/ubuntu/boxes/trusty64&amp;quot;&lt;/code&gt; is the url where this box is&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;config.vm.provider &amp;quot;virtualbox&amp;quot; do |vb|&lt;/code&gt; this says that if the &lt;code&gt;provider&lt;/code&gt;, the hypervisor, is Virtualbox, do the following&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;vb.memory = &amp;quot;1028&amp;quot;&lt;/code&gt; gives the VM 1 GB of RAM&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;vb.cpus = &amp;quot;1&amp;quot;&lt;/code&gt; gives the VM 1 CPU&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;The last section is where it gets interesting&amp;hellip;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-ruby&#34;&gt;config.vm.define &amp;quot;#{project_name}&amp;quot; do |machine|
+    machine.vm.hostname = &amp;quot;#{project_name}&amp;quot;
+    machine.vm.synced_folder &amp;quot;#{vagrant_root}/shared&amp;quot;, &amp;quot;/home/vagrant/shared&amp;quot;
+    machine.vm.provision :shell, :path =&amp;gt; &amp;quot;#{vagrant_root}/ansible-setup.sh&amp;quot;
+end
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;config.vm.define &amp;quot;#{project_name}&amp;quot; do |machine|&lt;/code&gt; here we start to define some parameters for the machine&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;machine.vm.hostname = &amp;quot;#{project_name}&amp;quot;&lt;/code&gt; defines the hostname of the machine as the project name&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;machine.vm.synced_folder &amp;quot;#{vagrant_root}/shared&amp;quot;, &amp;quot;/home/vagrant/shared&amp;quot;&lt;/code&gt;
+this sets up a shared folder between the VM and the host computer, my laptop.
+&lt;code&gt;&amp;quot;#{vagrant_root}/shared&amp;quot;&lt;/code&gt; is a folder on the host, within the same directory
+as the &lt;em&gt;Vagrantfile&lt;/em&gt;, &lt;code&gt;&amp;quot;/home/vagrant/shared&amp;quot;&lt;/code&gt; is a folder in the vagrant user&amp;rsquo;s
+home directory on the VM. These folders will be synced, any changes made in one
+will be reflected in the other. This means I can edit and version control files
+on my host machine, using my usual workflow, and I can use them easily in the VM,
+rather than having to do this work inside the VM.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;machine.vm.provision :shell, :path =&amp;gt; &amp;quot;#{vagrant_root}/ansible-setup.sh&amp;quot;&lt;/code&gt;
+this defines the path to a shell script that provisions the VM, installing Ansible.
+There are different options for provisioning the Vm, including Ansible itself,
+woah, meta! but I find for small environments like this a shell script does fine.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;This is the &lt;code&gt;ansible-setup.sh&lt;/code&gt; file:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;#!/bin/bash
+TZ=Europe/London
+
+echo &amp;quot;+-----------------------------------------------+&amp;quot;
+echo &amp;quot;| Provisioning Ansible Cisco Playground Machine |&amp;quot;
+echo &amp;quot;+-----------------------------------------------+&amp;quot;
+echo &amp;quot;Setting timezone...&amp;quot;
+sudo timedatectl set-timezone $TZ &amp;gt; /dev/null 2&amp;gt;&amp;amp;1
+echo &amp;quot;Adding dependencies...&amp;quot;
+sudo apt-get install software-properties-common &amp;gt; /dev/null 2&amp;gt;&amp;amp;1
+echo &amp;quot;Adding Ansible repo...&amp;quot;
+sudo apt-add-repository ppa:ansible/ansible &amp;gt; /dev/null 2&amp;gt;&amp;amp;1
+echo &amp;quot;Updating apt-get...&amp;quot;
+sudo apt-get -y update &amp;gt; /dev/null 2&amp;gt;&amp;amp;1
+echo &amp;quot;Installing Git...&amp;quot;
+sudo apt-get -y install git &amp;gt; /dev/null 2&amp;gt;&amp;amp;1
+echo &amp;quot;Installing Ansible...&amp;quot;
+sudo apt-get -y install ansible &amp;gt; /dev/null 2&amp;gt;&amp;amp;1
+echo &amp;quot;Installing ntc-ansible module...&amp;quot;
+sudo apt-get -y install python-pip &amp;gt; /dev/null 2&amp;gt;&amp;amp;1
+sudo apt-get -y install zlib1g-dev libxml2-dev libxslt-dev python-dev &amp;gt; /dev/null 2&amp;gt;&amp;amp;1
+sudo pip install ntc-ansible &amp;gt; /dev/null 2&amp;gt;&amp;amp;1
+git clone https://github.com/networktocode/ntc-ansible --recursive &amp;gt; /dev/null 2&amp;gt;&amp;amp;1
+sudo rm -r /home/vagrant/shared/library &amp;gt; /dev/null 2&amp;gt;&amp;amp;1
+sudo mv /home/vagrant/ntc-ansible/library /home/vagrant/shared/library &amp;gt; /dev/null 2&amp;gt;&amp;amp;1
+echo &amp;quot;+----------------------------------------------+&amp;quot;
+echo &amp;quot;| Ansible Cisco Playground Machine Provisioned |&amp;quot;
+echo &amp;quot;+----------------------------------------------+&amp;quot;
+echo &amp;quot;|                Go build stuff!               |&amp;quot;
+echo &amp;quot;+----------------------------------------------+&amp;quot;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;There&amp;rsquo;s a few things going on in there, including the Ansible installation and
+the installation of &lt;a href=&#34;http://jedelman.com/&#34;&gt;Jason Edelman&amp;rsquo;s&lt;/a&gt; excellent third
+party Ansible library &lt;a href=&#34;https://github.com/networktocode/ntc-ansible/&#34;&gt;ntc-ansible&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;Now, if we do a &lt;code&gt;tree /F&lt;/code&gt; command in the project directory, we can see everything
+we now have, the &lt;em&gt;Vagrantfile&lt;/em&gt;, the provision script, the shared folder
+(currently empty), and a &lt;code&gt;.vagrant&lt;/code&gt; directory I&amp;rsquo;ve never had to do anything with
+since working with Vagrant.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;Folder PATH listing for volume Windows
+Volume serial number is A879-5C69
+C:.
+├───Vagrantfile
+├───ansible-setup.sh
+├───shared
+└───.vagrant
+    └───machines
+        └───acp
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Right, we&amp;rsquo;re ready to go. I&amp;rsquo;ve found the vagrant commands I use most often are&amp;hellip;&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;vagrant up&lt;/code&gt; brings the machine up&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;vagrant ssh&lt;/code&gt; establishes an ssh connection to the VM&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;vagrant halt&lt;/code&gt; shuts the VM down&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;vagrant reload&lt;/code&gt; restarts the VM&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;vagrant destroy&lt;/code&gt; destroys the VM&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;On the command line, inside the Vagrant project directory, type in &lt;code&gt;vagrant up&lt;/code&gt;,
+and this should, fingers crossed, bring up the new VM.  If this is the first
+Vagrant machine you&amp;rsquo;ve created it&amp;rsquo;s going to take some time to download the
+Ubuntu image, 15-20 mins maybe. I already have the relevant Ubuntu image, so it
+only takes ~60 secs to bring the VM up.  This is the output I get&amp;hellip;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;Bringing machine &#39;acp&#39; up with &#39;virtualbox&#39; provider...
+==&amp;gt; acp: Importing base box &#39;ubuntu/trusty64&#39;...
+==&amp;gt; acp: Matching MAC address for NAT networking...
+==&amp;gt; acp: Checking if box &#39;ubuntu/trusty64&#39; is up to date...
+==&amp;gt; acp: A newer version of the box &#39;ubuntu/trusty64&#39; is available! You currently
+==&amp;gt; acp: have version &#39;20160708.1.2&#39;. The latest is version &#39;20160801.0.0&#39;. Run
+==&amp;gt; acp: `vagrant box update` to update.
+==&amp;gt; acp: Setting the name of the VM: ansible_cisco_playground_acp_1470214415769_53070
+==&amp;gt; acp: Clearing any previously set forwarded ports...
+==&amp;gt; acp: Clearing any previously set network interfaces...
+==&amp;gt; acp: Preparing network interfaces based on configuration...
+    acp: Adapter 1: nat
+==&amp;gt; acp: Forwarding ports...
+    acp: 22 (guest) =&amp;gt; 2222 (host) (adapter 1)
+==&amp;gt; acp: Running &#39;pre-boot&#39; VM customizations...
+==&amp;gt; acp: Booting VM...
+==&amp;gt; acp: Waiting for machine to boot. This may take a few minutes...
+    acp: SSH address: 127.0.0.1:2222
+    acp: SSH username: vagrant
+    acp: SSH auth method: private key
+    acp:
+    acp: Vagrant insecure key detected. Vagrant will automatically replace
+    acp: this with a newly generated keypair for better security.
+    acp:
+    acp: Inserting generated public key within guest...
+    acp: Removing insecure key from the guest if it is present...
+    acp: Key inserted! Disconnecting and reconnecting using new SSH key...
+==&amp;gt; acp: Machine booted and ready!
+==&amp;gt; acp: Checking for guest additions in VM...
+    acp: The guest additions on this VM do not match the installed version of
+    acp: VirtualBox! In most cases this is fine, but in rare cases it can
+    acp: prevent things such as shared folders from working properly. If you see
+    acp: shared folder errors, please make sure the guest additions within the
+    acp: virtual machine match the version of VirtualBox you have installed on
+    acp: your host and reload your VM.
+    acp:
+    acp: Guest Additions Version: 4.3.36
+    acp: VirtualBox Version: 5.0
+==&amp;gt; acp: Setting hostname...
+==&amp;gt; acp: Mounting shared folders...
+    acp: /vagrant =&amp;gt; C:/Users/robertph/code/ansible/ansible_cisco_playground
+    acp: /home/vagrant/shared =&amp;gt; C:/Users/robertph/code/ansible/ansible_cisco_playground/shared
+==&amp;gt; acp: Running provisioner: shell...
+    acp: Running: C:/Users/robertph/AppData/Local/Temp/vagrant-shell20160803-7424-cqcd1j.sh
+==&amp;gt; acp: stdin: is not a tty
+==&amp;gt; acp: +-----------------------------------------------+
+==&amp;gt; acp: | Provisioning Ansible Cisco Playground Machine |
+==&amp;gt; acp: +-----------------------------------------------+
+==&amp;gt; acp: Setting timezone...
+==&amp;gt; acp: Adding dependencies...
+==&amp;gt; acp: Adding Ansible repo...
+==&amp;gt; acp: Updating apt-get...
+==&amp;gt; acp: Installing Git...
+==&amp;gt; acp: Installing Ansible...
+==&amp;gt; acp: Installing ntc-ansible module...
+==&amp;gt; acp: +----------------------------------------------+
+==&amp;gt; acp: | Ansible Cisco Playground Machine Provisioned |
+==&amp;gt; acp: +----------------------------------------------+
+==&amp;gt; acp: |                Go build stuff!               |
+==&amp;gt; acp: +----------------------------------------------+
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The bottom part is the provision script, this will only run the first time the
+machine is started.  Otherwise the output will be:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;==&amp;gt; acp: Machine already provisioned. Run `vagrant provision` or use the `--provision`
+==&amp;gt; acp: flag to force provisioning. Provisioners marked to run always will still run.
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;It will also be a lot quicker bringing the machine up, a few seconds maybe. So
+much quicker than dealing with Virtualbox manually.&lt;/p&gt;
+
+&lt;p&gt;We can check the status of the machine with &lt;code&gt;vagrant status&lt;/code&gt;&amp;hellip;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;Current machine states:
+
+acp                       running (virtualbox)
+
+The VM is running. To stop this VM, you can run `vagrant halt` to
+shut it down forcefully, or you can run `vagrant suspend` to simply
+suspend the virtual machine. In either case, to restart it again,
+simply run `vagrant up`.
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;And so now that we have a running VM, we need to access it. For this we use the
+&lt;code&gt;vagrant ssh&lt;/code&gt; command, which will bring us into the VM&amp;rsquo;s command line&amp;hellip;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;Welcome to Ubuntu 14.04.4 LTS (GNU/Linux 3.13.0-92-generic x86_64)
+
+ * Documentation:  https://help.ubuntu.com/
+
+  System information as of Wed Aug  3 10:08:49 BST 2016
+
+  System load:  0.48              Processes:           81
+  Usage of /:   4.2% of 39.34GB   Users logged in:     0
+  Memory usage: 12%               IP address for eth0: 10.0.2.15
+  Swap usage:   0%
+
+  Graph this data and manage this system at:
+    https://landscape.canonical.com/
+
+  Get cloud support with Ubuntu Advantage Cloud Guest:
+    http://www.ubuntu.com/business/services/cloud
+
+New release &#39;16.04.1 LTS&#39; available.
+Run &#39;do-release-upgrade&#39; to upgrade to it.
+
+
+vagrant@acp:~$
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Let&amp;rsquo;s check Ansible is there&amp;hellip;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;vagrant@acp:~$ ansible --version
+ansible 2.1.1.0
+  config file = /etc/ansible/ansible.cfg
+  configured module search path = Default w/o overrides
+vagrant@acp:~$
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Fantastic! Let&amp;rsquo;s check we&amp;rsquo;ve got a network to the outside world&amp;hellip;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;vagrant@acp:~$ ping 8.8.8.8
+PING 8.8.8.8 (8.8.8.8) 56(84) bytes of data.
+64 bytes from 8.8.8.8: icmp_seq=1 ttl=59 time=20.3 ms
+64 bytes from 8.8.8.8: icmp_seq=2 ttl=59 time=19.9 ms
+♥
+--- 8.8.8.8 ping statistics ---
+2 packets transmitted, 2 received, 0% packet loss, time 1003ms
+rtt min/avg/max/mdev = 19.930/20.155/20.381/0.266 ms
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Sweet. And is our shared folder there&amp;hellip;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;vagrant@acp:~$ ls -l
+total 8
+drwxr-xr-x 6 root    root    4096 Aug  3 09:55 ntc-ansible
+drwxrwxrwx 1 vagrant vagrant 4096 Aug  3 09:56 shared
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;There it is, alongside the &lt;code&gt;ntc-ansible&lt;/code&gt; module. If we create a file in there,
+we should see it on our host machine.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;vagrant@acp:~$ echo &amp;quot;Hello Windows, from Linux&amp;quot; &amp;gt; shared/hello.txt
+vagrant@acp:~$ ls -l shared/
+total 1
+-rwxrwxrwx 1 vagrant vagrant 26 Aug  3 10:17 hello.txt
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;img src=&#34;{{ site.url }}/images/hello_msg.png&#34; alt=&#34;hello_msg&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Good good, we can now start creating our Ansible files on our host machine, and
+easily run them in the Vagrant VM.  And when we need to share what we&amp;rsquo;ve done,
+we can just zip up the directory, or version control it in git, share it, and
+others can &lt;code&gt;vagrant up&lt;/code&gt; and &lt;code&gt;vagrant ssh&lt;/code&gt; into the working environment we&amp;rsquo;ve created.&lt;/p&gt;
+
+&lt;p&gt;This Ansible Cisco Playground directory is up on Github if you want to clone/download
+it and have a play.  It is a work in progress, and a little janky currently,
+with no documentation, but &lt;a href=&#34;https://github.com/bordeltabernacle/ansible_cisco_playground&#34;&gt;here it is nonetheless&lt;/a&gt;.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Songs to Code to: Talk Is Cheap</title>
+      <link>/post/2016-07-26-chet-faker-talk-is-cheap/</link>
+      <pubDate>Tue, 26 Jul 2016 00:00:00 +0000</pubDate>
+      
+      <guid>/post/2016-07-26-chet-faker-talk-is-cheap/</guid>
+      <description>&lt;iframe width=&#34;640&#34; height=&#34;360&#34; src=&#34;https://www.youtube.com/embed/aP_-P_BS6KY&#34; frameborder=&#34;0&#34;&gt; &lt;/iframe&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Sam Chatmon: Sittin&#39; On Top Of The World</title>
+      <link>/post/2016-01-22-sam-chatmon-sittin-on-top-of-the-world/</link>
+      <pubDate>Fri, 22 Jan 2016 00:00:00 +0000</pubDate>
+      
+      <guid>/post/2016-01-22-sam-chatmon-sittin-on-top-of-the-world/</guid>
+      <description>&lt;iframe width=&#34;640&#34; height=&#34;360&#34; src=&#34;https://www.youtube.com/embed/ueEQKZcXfjc&#34; frameborder=&#34;0&#34;&gt; &lt;/iframe&gt;
+</description>
+    </item>
+    
+    <item>
       <title>Big Bill Broonzy: Getting Older Every Day</title>
-      <link>/post/2015/2015-09-25-big-bill-broonzy-getting-older-every-day/</link>
+      <link>/post/2015-09-25-big-bill-broonzy-getting-older-every-day/</link>
       <pubDate>Fri, 25 Sep 2015 00:00:00 +0000</pubDate>
       
-      <guid>/post/2015/2015-09-25-big-bill-broonzy-getting-older-every-day/</guid>
+      <guid>/post/2015-09-25-big-bill-broonzy-getting-older-every-day/</guid>
       <description>&lt;iframe width=&#34;640&#34; height=&#34;360&#34; src=&#34;https://www.youtube.com/embed/hIWBbeUge5c&#34;frameborder=&#34;0&#34;&gt;&lt;/iframe&gt;
 </description>
     </item>
     
     <item>
       <title>Notes on Clojure: Keywords &amp; Symbols Confusion</title>
-      <link>/post/2015/2015-09-25-notes-on-clojure-keywords-symbols/</link>
+      <link>/post/2015-09-25-notes-on-clojure-keywords-symbols/</link>
       <pubDate>Fri, 25 Sep 2015 00:00:00 +0000</pubDate>
       
-      <guid>/post/2015/2015-09-25-notes-on-clojure-keywords-symbols/</guid>
+      <guid>/post/2015-09-25-notes-on-clojure-keywords-symbols/</guid>
       <description>&lt;p&gt;Having not used Clojure extensively yet, or really much at all, I&amp;rsquo;m still unsure as to when to use Keywords.  So I just spent a bit of time exploring them, and subsequently touched on Symbols too.  And in writing this post confused myself further in the process.  What you have here then is not a formed explanation of either Keywords or Symbols, but observations on their behaviour. While reading this, imagine me saying &amp;lsquo;huh?&amp;rsquo; and scratching my head like Stan Laurel.&lt;/p&gt;
 
 &lt;p&gt;Keywords are described in the &lt;a href=&#34;http://clojure.org/data_structures#Data%20Structures-Keywords&#34;&gt;Clojure docs&lt;/a&gt;, within the Data Structures section, as such:&lt;/p&gt;
@@ -334,20 +1120,20 @@ user=&amp;gt; &#39;:blues&#39;
     
     <item>
       <title>Lonnie Johnson: Away Down In The Alley Blues</title>
-      <link>/post/2015/2015-09-16-lonnie-johnson-away-down-in-the-alley-blues/</link>
+      <link>/post/2015-09-16-lonnie-johnson-away-down-in-the-alley-blues/</link>
       <pubDate>Wed, 16 Sep 2015 00:00:00 +0000</pubDate>
       
-      <guid>/post/2015/2015-09-16-lonnie-johnson-away-down-in-the-alley-blues/</guid>
+      <guid>/post/2015-09-16-lonnie-johnson-away-down-in-the-alley-blues/</guid>
       <description>&lt;iframe width=&#34;640&#34; height=&#34;360&#34; src=&#34;https://www.youtube.com/embed/n4Ket08gies&#34;frameborder=&#34;0&#34;&gt;&lt;/iframe&gt;
 </description>
     </item>
     
     <item>
       <title>Notes on Django: Population Script</title>
-      <link>/post/2015/2015-09-16-notes-on-django-population-script/</link>
+      <link>/post/2015-09-16-notes-on-django-population-script/</link>
       <pubDate>Wed, 16 Sep 2015 00:00:00 +0000</pubDate>
       
-      <guid>/post/2015/2015-09-16-notes-on-django-population-script/</guid>
+      <guid>/post/2015-09-16-notes-on-django-population-script/</guid>
       <description>&lt;p&gt;After my last Django post I happened across &lt;a href=&#34;http://www.tangowithdjango.com/book/chapters/models.html#creating-a-population-script&#34;&gt;this population script&lt;/a&gt; from &lt;a href=&#34;http://www.tangowithdjango.com/&#34;&gt;Tango with Django&lt;/a&gt;.  So I&amp;rsquo;ve updated it and adapted it to my own needs.  Ha, Screw You &lt;a href=&#34;http://www.discoposse.com/index.php/2014/11/09/pay-yourself-first-the-art-of-reducing-technical-debt/&#34;&gt;Technical Debt!&lt;/a&gt;&lt;/p&gt;
 
 &lt;p&gt;&lt;code&gt;example models.py&lt;/code&gt;&lt;/p&gt;
@@ -507,10 +1293,10 @@ SuperUser: uname
     
     <item>
       <title>Notes on Clojure: Dipping My Toes In</title>
-      <link>/post/2015/2015-09-04-clojure-dipping-toes/</link>
+      <link>/post/2015-09-04-clojure-dipping-toes/</link>
       <pubDate>Fri, 04 Sep 2015 00:00:00 +0000</pubDate>
       
-      <guid>/post/2015/2015-09-04-clojure-dipping-toes/</guid>
+      <guid>/post/2015-09-04-clojure-dipping-toes/</guid>
       <description>&lt;p&gt;Maybe because I&amp;rsquo;m such a late arrival to this programming pastime, I feel a certain inadequacy, a need to over compensate.  Or maybe I just find it exciting learning new things, and I just want to get deeper and consume everything.  Anyway, I&amp;rsquo;ve been getting more interested in functional programming, I don&amp;rsquo;t know why.  I&amp;rsquo;m not so embedded in object-oriented, and I&amp;rsquo;ve been trying to understand JavaScript&amp;rsquo;s prototype-based programming, and if I&amp;rsquo;m honest, these concepts aren&amp;rsquo;t yet meaningful enough to me to matter so much outside of syntax and the practicalities of how to write code, yet functional programming seems to make a certain amount of sense. Perhaps this will become an endeavour in proving myself wrong. So, I listened to &lt;a href=&#34;https://twitter.com/gigasquid&#34;&gt;Carin Meier&lt;/a&gt; on &lt;a href=&#34;https://changelog.com/171/&#34;&gt;The Changelog&lt;/a&gt; and bought &lt;a href=&#34;http://www.amazon.co.uk/Living-Clojure-Carin-Meier/dp/1491909048/ref=sr_1_1?ie=UTF8&amp;amp;qid=1441319254&amp;amp;sr=8-1&amp;amp;keywords=living+clojure&#34;&gt;her book&lt;/a&gt;, and am going to start learning Clojure.&lt;/p&gt;
 
 &lt;p&gt;&lt;a href=&#34;http://leiningen.org/&#34;&gt;Leiningen&lt;/a&gt; is the tool Carin recommends for getting started with Clojure, so let&amp;rsquo;s install that.
@@ -709,10 +1495,10 @@ user=&amp;gt; (cons &amp;ldquo;down&amp;rdquo; (cons 7 &amp;lsquo;(5, &amp;ldquo
     
     <item>
       <title>Notes on Django: Setting Up</title>
-      <link>/post/2015/2015-09-03-notes-on-django-setting-up/</link>
+      <link>/post/2015-09-03-notes-on-django-setting-up/</link>
       <pubDate>Thu, 03 Sep 2015 00:00:00 +0000</pubDate>
       
-      <guid>/post/2015/2015-09-03-notes-on-django-setting-up/</guid>
+      <guid>/post/2015-09-03-notes-on-django-setting-up/</guid>
       <description>&lt;p&gt;I&amp;rsquo;m starting to develop multiple Django projects, but am still referring to the &lt;em&gt;(excellent)&lt;/em&gt; &lt;a href=&#34;https://docs.djangoproject.com/en/1.8/intro/tutorial01/&#34;&gt;Django tutorial&lt;/a&gt; to get set up, so I thought I&amp;rsquo;d write out the steps I take to set up a new Django project and it&amp;rsquo;s associated development environment, just to help remember it and have an easy reference for the future.&lt;/p&gt;
 
 &lt;p&gt;I work on my Django projects within a &lt;a href=&#34;https://www.vagrantup.com/&#34;&gt;Vagrant&lt;/a&gt; environment.  This creates a nice, easy-to-use, isolated environment that is simple to bring up, tear down and replicate.  It also means I, controversially, don&amp;rsquo;t use &lt;a href=&#34;https://virtualenv.pypa.io/en/latest/&#34;&gt;virtualenv&lt;/a&gt;, as Vagrant isolates things for me.  Though I admit, I&amp;rsquo;m still an amateur and am probably overlooking something important, especially as nothing I&amp;rsquo;ve made has yet made it into production.  To be honest I&amp;rsquo;d really like to move everything to &lt;a href=&#34;https://www.docker.com/&#34;&gt;Docker&lt;/a&gt; but I haven&amp;rsquo;t yet had the time to properly learn Docker or explore the feasability of this.  One of the nice things about Vagrant is that I have a separate VM for my PostgreSQL database.  So, because I&amp;rsquo;m still learning Postgres, and run into migration problems when changing models, it is easy to just destroy and rebuild my database backend quickly.  This does however destroy any data I have, which currently isn&amp;rsquo;t a big problem.  I want to put aside some time in my workflow for creating a script that populates the database with some basic data for development.  But I really need to spend some time learning how to properly deal with the database and migrations, of course.&lt;/p&gt;
@@ -880,20 +1666,20 @@ vagrant@django:~/shared/mysite$ python manage.py createsuperuser
     
     <item>
       <title>Memphis Minnie: Down By The Riverside</title>
-      <link>/post/2015/2015-09-02-memphis-minnie-down-by-the-riverside/</link>
+      <link>/post/2015-09-02-memphis-minnie-down-by-the-riverside/</link>
       <pubDate>Wed, 02 Sep 2015 00:00:00 +0000</pubDate>
       
-      <guid>/post/2015/2015-09-02-memphis-minnie-down-by-the-riverside/</guid>
+      <guid>/post/2015-09-02-memphis-minnie-down-by-the-riverside/</guid>
       <description>&lt;iframe width=&#34;640&#34; height=&#34;360&#34; src=&#34;https://www.youtube.com/embed/blBZgM4e-CY&#34; frameborder=&#34;0&#34;&gt; &lt;/iframe&gt;
 </description>
     </item>
     
     <item>
       <title>Notes on Python: args &#39;n&#39; kwargs</title>
-      <link>/post/2015/2015-08-26-args-kwargs/</link>
+      <link>/post/2015-08-26-args-kwargs/</link>
       <pubDate>Wed, 26 Aug 2015 00:00:00 +0000</pubDate>
       
-      <guid>/post/2015/2015-08-26-args-kwargs/</guid>
+      <guid>/post/2015-08-26-args-kwargs/</guid>
       <description>&lt;p&gt;Python&amp;rsquo;s &lt;code&gt;*args&lt;/code&gt; &amp;amp; &lt;code&gt;**kwargs&lt;/code&gt; have always intimidated me for some reason.  Since I&amp;rsquo;ve been working with Django they&amp;rsquo;ve turned up more frequently, for instance, when overriding a model&amp;rsquo;s &lt;code&gt;save&lt;/code&gt; function:&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;class myModel(models.Model):
@@ -1082,20 +1868,20 @@ Memphis Minnie was born on 3rd June 1897 and died on 6th August 1973
     
     <item>
       <title>Sister Rosetta Tharpe: Didn&#39;t It Rain</title>
-      <link>/post/2015/2015-08-25-sister-rosetta-tharpe-didnt-it-rain/</link>
+      <link>/post/2015-08-25-sister-rosetta-tharpe-didnt-it-rain/</link>
       <pubDate>Tue, 25 Aug 2015 00:00:00 +0000</pubDate>
       
-      <guid>/post/2015/2015-08-25-sister-rosetta-tharpe-didnt-it-rain/</guid>
+      <guid>/post/2015-08-25-sister-rosetta-tharpe-didnt-it-rain/</guid>
       <description>&lt;iframe width=&#34;640&#34; height=&#34;360&#34; src=&#34;https://www.youtube.com/embed/SR2gR6SZC2M&#34; frameborder=&#34;0&#34;&gt; &lt;/iframe&gt;
 </description>
     </item>
     
     <item>
       <title>Notes on Node.js: Dipping My Toes In</title>
-      <link>/post/2015/2015-08-21-node-dipping-toes/</link>
+      <link>/post/2015-08-21-node-dipping-toes/</link>
       <pubDate>Fri, 21 Aug 2015 00:00:00 +0000</pubDate>
       
-      <guid>/post/2015/2015-08-21-node-dipping-toes/</guid>
+      <guid>/post/2015-08-21-node-dipping-toes/</guid>
       <description>&lt;p&gt;I started using &lt;a href=&#34;http://exercism.io/&#34;&gt;exercism.io&lt;/a&gt; this morning after hearing about it on &lt;a href=&#34;http://www.codenewbie.org/podcast/nitpicks-and-devils&#34;&gt;Code Newbies&lt;/a&gt;, mainly to get more practice with Python.  I&amp;rsquo;m also learning JavaScript as well and, seeing there was a JS track, I thought I&amp;rsquo;d have a glance at it, and inadvertently started using node.js, something I&amp;rsquo;ve wanted to do for a while now.  I got that new &lt;em&gt;&amp;lsquo;don&amp;rsquo;t quite understand but feel real excited&amp;rsquo;&lt;/em&gt; feeling.&lt;/p&gt;
 
 &lt;p&gt;As far as my understanding goes node.js is basically JavaScript, the programming language of the web, on a computer, desktop/laptop/server etc., rather than in a browser. It&amp;rsquo;s easy enough to work out how to install node.js so I won&amp;rsquo;t go into that here.
@@ -1135,950 +1921,6 @@ Finished in 0 seconds
 &lt;/code&gt;&lt;/pre&gt;
 
 &lt;p&gt;So, it&amp;rsquo;s basic, it&amp;rsquo;s obvious, but it&amp;rsquo;s blowin&amp;rsquo; my mind just a bit.  I&amp;rsquo;m well excited to get started with this and explore it further.  I&amp;rsquo;m gonna go over this little code snippet and work it out as best I can, and then who knows, maybe I&amp;rsquo;ll get a MEAN stack up and running for my &lt;em&gt;new awesome web app idea&lt;/em&gt;.&lt;/p&gt;
-</description>
-    </item>
-    
-    <item>
-      <title>Notes on Python: Optional Arguments</title>
-      <link>/post/2015/2015-08-21-python-function-arguments/</link>
-      <pubDate>Fri, 21 Aug 2015 00:00:00 +0000</pubDate>
-      
-      <guid>/post/2015/2015-08-21-python-function-arguments/</guid>
-      <description>&lt;p&gt;Passing an optional argument to a Python function.  This is pretty basic stuff but I didn&amp;rsquo;t know it, or at least it hadn&amp;rsquo;t properly registered as a thing in my mind until today.  This post doesn&amp;rsquo;t even take into consideration &lt;code&gt;*args&lt;/code&gt; &amp;amp; &lt;code&gt;**kwargs&lt;/code&gt;.&lt;/p&gt;
-
-&lt;p&gt;Here we have a simple Python function, which takes one argument:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;&amp;gt;&amp;gt;&amp;gt; def the_blues(name):
-...     print name + &#39; got the blues.&#39;
-...
-&amp;gt;&amp;gt;&amp;gt;
-&amp;gt;&amp;gt;&amp;gt; the_blues(&#39;Big Bill Broonzy&#39;)
-Big Bill Broonzy got the blues.
-&amp;gt;&amp;gt;&amp;gt;
-&amp;gt;&amp;gt;&amp;gt; the_blues()
-Traceback (most recent call last):
-  File &amp;quot;&amp;lt;stdin&amp;gt;&amp;quot;, line 1, in &amp;lt;module&amp;gt;
-TypeError: the_blues() takes exactly 1 argument (0 given)
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;When we call the function with an argument we&amp;rsquo;re all good.  But when we don&amp;rsquo;t include an argument, no dice, we get an error.  Fair enough, like it says &lt;code&gt;the_blues() takes exactly 1 argument (0 given)&lt;/code&gt;.
-Often, I write scripts for other people to use.  My young son can be a bit timid around other people sometimes, but I tell him &lt;em&gt;&amp;ldquo;People are O.K.&amp;rdquo;&lt;/em&gt; Unfortunately other people don&amp;rsquo;t always use scripts the way the writer intended.  You can&amp;rsquo;t be too strict with these things, you&amp;rsquo;ve gotta account for people doing things differently, always.
-So let&amp;rsquo;s stick an &lt;code&gt;if/else&lt;/code&gt; in this function to make up for this.&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;&amp;gt;&amp;gt;&amp;gt; def the_blues(name):
-...     if name != None:
-...         print name + &#39; got the blues.&#39;
-...     else:
-...         print &#39;You got the blues.&#39;
-...
-&amp;gt;&amp;gt;&amp;gt; the_blues(&#39;Sister Rosetta Tharpe&#39;)
-Sister Rosetta Tharpe got the blues.
-&amp;gt;&amp;gt;&amp;gt; the_blues()
-Traceback (most recent call last):
-  File &amp;quot;&amp;lt;stdin&amp;gt;&amp;quot;, line 1, in &amp;lt;module&amp;gt;
-TypeError: the_blues() takes exactly 1 argument (0 given)
-
-# or
-
-&amp;gt;&amp;gt;&amp;gt; def the_blues(name):
-...      if name:
-...          print name + &#39; got the blues.&#39;
-...      else:
-...          print &#39;You got the blues.&#39;
-...
-&amp;gt;&amp;gt;&amp;gt; the_blues(&#39;Memphis Slim&#39;)
-Memphis Slim got the blues.
-&amp;gt;&amp;gt;&amp;gt; the_blues()
-Traceback (most recent call last):
-  File &amp;quot;&amp;lt;stdin&amp;gt;&amp;quot;, line 1, in &amp;lt;module&amp;gt;
-TypeError: the_blues() takes exactly 1 argument (0 given)
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;Same again, no dice.
-So, this is where an optional argument can come in handy.  Of course, this is also a pretty good situation to pull in a &lt;code&gt;try/except&lt;/code&gt;.&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;&amp;gt;&amp;gt;&amp;gt; def the_blues(name=&#39;&#39;):
-...     if name:
-...         print name + &#39; got the blues.&#39;
-...     else:
-...         print &#39;You got the blues.&#39;
-...
-&amp;gt;&amp;gt;&amp;gt; the_blues(&#39;J. B. Lenoir&#39;)
-J. B. Lenoir got the blues.
-&amp;gt;&amp;gt;&amp;gt; the_blues()
-You got the blues.
-
-# or even
-
-&amp;gt;&amp;gt;&amp;gt; def the_blues(name=&#39;You&#39;):
-...     print name + &#39; got the blues.&#39;
-...
-&amp;gt;&amp;gt;&amp;gt; the_blues(&amp;quot;Lightnin&#39; Hopkins&amp;quot;)
-Lightnin&#39; Hopkins got the blues.
-&amp;gt;&amp;gt;&amp;gt; the_blues()
-You got the blues.
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;By defining our argument as &lt;code&gt;name=&lt;/code&gt; rather than &lt;code&gt;name&lt;/code&gt;, and passing an initial value to it, we make it optional to give an argument when calling the function.  We&amp;rsquo;re basically saying &lt;em&gt;&amp;lsquo;Look, we&amp;rsquo;ll use &lt;code&gt;this value&lt;/code&gt; unless you give us something different&amp;rsquo;&lt;/em&gt;.&lt;/p&gt;
-
-&lt;p&gt;Thanks to &lt;a href=&#34;http://exercism.io/&#34;&gt;exercism.io&lt;/a&gt; for making me aware of this.  Exercism is very cool, check it out. Never stop learning.&lt;/p&gt;
-</description>
-    </item>
-    
-    <item>
-      <title>Installing KVM &amp; OVS on Ubuntu</title>
-      <link>/post/2015/2015-04-24-kvm-ovs-ubuntu/</link>
-      <pubDate>Fri, 24 Apr 2015 00:00:00 +0000</pubDate>
-      
-      <guid>/post/2015/2015-04-24-kvm-ovs-ubuntu/</guid>
-      <description>&lt;p&gt;Setting up the lab to explore Linux virtualisation &amp;amp; OpenvSwitch&lt;/p&gt;
-
-&lt;p&gt;KVM &amp;amp; OpenvSwitch are technologies I&amp;rsquo;ve wanted to learn for a while now. I think it&amp;rsquo;ll really help my understanding and knowledge of Linux and the underlying mechanics of virtualisation and how it interacts with the physical network.&lt;/p&gt;
-
-&lt;p&gt;Installing KVM is already well documented &lt;a href=&#34;https://help.ubuntu.com/community/KVM/Installation&#34;&gt;here&lt;/a&gt;, but for completeness here is my installation process:&lt;/p&gt;
-
-&lt;p&gt;First, update, and &lt;a href=&#34;http://www.cyberciti.biz/faq/linux-xen-vmware-kvm-intel-vt-amd-v-support/&#34;&gt;check&lt;/a&gt; your hardware can support virtualisation.&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ sudo apt-get -y update
-$ egrep -c &#39;(vmx|svm)&#39; /proc/cpuinfo
-8
-$ kvm-ok
-INFO: /dev/kvm exists
-KVM acceleration can be used
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;&lt;code&gt;egrep&lt;/code&gt; is like &lt;code&gt;grep&lt;/code&gt;, a command that prints out any line with the given regular expression. So, here we&amp;rsquo;re searching the &lt;strong&gt;&lt;em&gt;cpuinfo&lt;/em&gt;&lt;/strong&gt; file for any lines containing &lt;strong&gt;&lt;em&gt;vmx&lt;/em&gt;&lt;/strong&gt; or &lt;strong&gt;&lt;em&gt;svm&lt;/em&gt;&lt;/strong&gt;. &lt;strong&gt;&lt;em&gt;vmx&lt;/em&gt;&lt;/strong&gt; is the flag that virtualisation is enabled in the BIOS for Intel CPUs &amp;amp; &lt;strong&gt;&lt;em&gt;svm&lt;/em&gt;&lt;/strong&gt; is the same for AMD CPUs. The &lt;code&gt;-c&lt;/code&gt; option is for count, so here we only print out the number of lines that match, rather than the lines themselves.
-So, a result of 1 or more means virtualisation is enabled. Here, I&amp;rsquo;ve got 8 lines in the &lt;strong&gt;&lt;em&gt;cpuinfo&lt;/em&gt;&lt;/strong&gt; file matching &lt;strong&gt;&lt;em&gt;vmx&lt;/em&gt;&lt;/strong&gt;.
-If you do get a 0, reboot your computer, go into the BIOS menu and make sure you&amp;rsquo;ve got virtualisation enabled.&lt;/p&gt;
-
-&lt;p&gt;The &lt;a href=&#34;http://manpages.ubuntu.com/manpages//lucid/man1/kvm-ok.1.html&#34;&gt;&lt;code&gt;kvm-ok&lt;/code&gt;&lt;/a&gt; program verifies whether your machine is able to run KVM virtual machines. It actually checks the &lt;strong&gt;&lt;em&gt;cpuinfo&lt;/em&gt;&lt;/strong&gt; file, like we did in the previous command. It also checks whether the kernel has detected the CPUs Virtualisation Technology (VT) capability, and looks to see if &lt;code&gt;/dev/kvm&lt;/code&gt; exists.&lt;/p&gt;
-
-&lt;p&gt;The capabilities exist, so let&amp;rsquo;s install KVM.&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ sudo apt-get install qemu-kvm libvirt-bin ubuntu-vm-builder bridge-utils virtinst
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;From the Ubuntu &lt;a href=&#34;https://help.ubuntu.com/community/KVM/Installation&#34;&gt;pages&lt;/a&gt;:&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;libvirt-bin provides libvirtd which you need to administer qemu and kvm instances using libvirt&lt;/li&gt;
-&lt;li&gt;qemu-kvm is the backend&lt;/li&gt;
-&lt;li&gt;ubuntu-vm-builder powerful command line tool for building virtual machines&lt;/li&gt;
-&lt;li&gt;bridge-utils provides a bridge from your network to the virtual machines&lt;/li&gt;
-&lt;li&gt;virtinst provides an easy way to provision operating systems into virtual machines and an API to the virt-manager application for its graphical VM creation wizard.&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;Ensure the user is added to the &lt;code&gt;libvirtd&lt;/code&gt; &amp;amp; &lt;code&gt;kvm&lt;/code&gt; groups.&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ sudo adduser `id -un` libvirtd &amp;amp;&amp;amp; sudo adduser `id -un` kvm
-The user `rob&#39; is already a member of `libvirtd&#39;.
-The user `rob&#39; is already a member of `kvm&#39;.
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;I found it was good to do a reboot here, just to make sure this membership is in effect.&lt;/p&gt;
-
-&lt;p&gt;Verify the installation. When we get round to installing some VMs, they should show up in this list.&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ virsh -c qemu:///system list
-Id Name State
-----------------------------------------------------
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;And we&amp;rsquo;re all set.&lt;/p&gt;
-
-&lt;p&gt;On a separate machine, I&amp;rsquo;ve set up a &lt;a href=&#34;http://xubuntu.org/&#34;&gt;Xubuntu&lt;/a&gt; VM, and installed &lt;strong&gt;&lt;em&gt;Virtual Machine Manager (VMM)&lt;/em&gt;&lt;/strong&gt;, just to give me a visual understanding of my VMs if need be.&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ sudo apt-get install virt-manager
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;&lt;strong&gt;&lt;em&gt;VMM&lt;/em&gt;&lt;/strong&gt; is super simple and intuitive. I love using the command line, but I still find having visual cues really helps my understanding of a situation, too much time in Windows &amp;amp; vSphere perhaps!&lt;/p&gt;
-
-&lt;p&gt;For the OpenvSwitch installation I pretty faithfully followed Scott Lowe&amp;rsquo;s &lt;a href=&#34;http://blog.scottlowe.org/2012/08/17/installing-kvm-and-open-vswitch-on-ubuntu/&#34;&gt;example&lt;/a&gt;, with a couple of differences.&lt;/p&gt;
-
-&lt;p&gt;Right, let&amp;rsquo;s get up-to-date, as per.&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ sudo apt-get -y update &amp;amp;&amp;amp; sudo apt-get -y dist-upgrade
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;Make way for OVS by removing the default &lt;strong&gt;&lt;em&gt;libvirt&lt;/em&gt;&lt;/strong&gt; bridge.&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ sudo virsh net-destroy default
-$ sudo virsh net-autostart --disable default
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;Remove &lt;a href=&#34;http://linux.die.net/man/8/ebtables&#34;&gt;&lt;strong&gt;&lt;em&gt;ebtables&lt;/em&gt;&lt;/strong&gt;&lt;/a&gt;, a Linux ethernet firewall.&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ sudo aptitude purge ebtables
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;Install OpenvSwitch.&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ sudo apt-get install openvswitch-controller openvswitch-switch openvswitch-datapath-source
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;The &lt;code&gt;openvswitch-brcompat&lt;/code&gt; has apparently been removed now from OVS, so it can be ignored.
-Once that&amp;rsquo;s finished, try starting OVS, though I found it was already running.&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ sudo service openvswitch-switch start
-start: Job is already running: openvswitch-switch
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;Run the OVS show command, you should just get an empty config.&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ sudo ovs-vsctl show
-7d84d624-632b-4d2c-93ad-56ad3cc543cc
-ovs_version: &amp;quot;2.0.2&amp;quot;
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;The &lt;code&gt;ovs-vsctl&lt;/code&gt; command, according to the &lt;a href=&#34;http://openvswitch.org/support/dist-docs/ovs-vsctl.8.pdf&#34;&gt;man page&lt;/a&gt;, is a &lt;em&gt;&amp;ldquo;utility for querying and configuring ovs-vswitchd&amp;rdquo;&lt;/em&gt;. &lt;code&gt;ovs-vswitchd&lt;/code&gt; is, again according to the &lt;a href=&#34;http://openvswitch.org/support/dist-docs/ovs-vswitchd.8.pdf&#34;&gt;man page&lt;/a&gt;, the daemon that manages and controls the OVS switch(es). As far as I understand it &lt;code&gt;ovs-vsctl&lt;/code&gt; queries and configures &lt;code&gt;ovsdb-server&lt;/code&gt; &lt;em&gt;(which provides the interface to the OVS databases&lt;/em&gt; &lt;a href=&#34;http://openvswitch.org/support/dist-docs/ovsdb-server.1.pdf&#34;&gt;[man page]&lt;/a&gt; &lt;em&gt;)&lt;/em&gt;, and &lt;code&gt;ovs-vswitchd&lt;/code&gt; then implements the changes. To be honest I&amp;rsquo;m not entirely sure of this process, I need to spend some more time reading &lt;a href=&#34;http://networkstatic.net/getting-started-ovsdb/&#34;&gt;this&lt;/a&gt; I think.
-Anyway, &lt;code&gt;ovs-vsctl show&lt;/code&gt; &amp;ldquo;Prints a brief overview of the database contents.&amp;rdquo; Of which, currently, we have none.&lt;/p&gt;
-
-&lt;p&gt;Now, the OVS bridge has to be created. When I was doing this I was SSH&amp;rsquo;d into the NIC I was configuring (em1), and creating the bridge brought the interface down. So, either make sure you have physical access to the machine, or SSH into another NIC.&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ sudo ovs-vsctl add-br br0
-$ sudo ovs-vsctl add-port br0 em1
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;Run the show command again, and we should have a configuration.&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ sudo ovs-vsctl show
-7d84d624-632b-4d2c-93ad-56ad3cc543cc
-Bridge &amp;quot;br0&amp;quot;
-Port &amp;quot;em1&amp;quot;
-Interface &amp;quot;em1&amp;quot;
-Port &amp;quot;br0&amp;quot;
-Interface &amp;quot;br0&amp;quot;
-type: internal
-ovs_version: &amp;quot;2.0.2&amp;quot;
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;Now, the interfaces need to be configured.&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ sudo vim /etc/network/interfaces
-
-# This file describes the network interfaces available on your system
-# and how to activate them. For more information, see interfaces(5).
-
-# The loopback network interface
-auto lo
-iface lo inet loopback
-
-# The primary network interface
-auto em1
-iface em1 inet static
-
-# The OVS bridge interface
-auto br0
-iface br0 inet static
-address 10.0.0.4
-network 10.0.0.0
-netmask 255.255.0.0
-broadcast 10.0.255.255
-gateway 10.0.0.2
-dns-nameservers 8.8.8.8 8.8.4.4
-dns-search test.local
-bridge_ports em1
-bridge_fd 9
-bridge_hello 2
-bridge_maxage 12
-bridge_stp off
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;This is just a copy of Scott&amp;rsquo;s configuration, with my network details in it.
-At this point I rebooted the server and ran &lt;code&gt;ifconfig em1 up&lt;/code&gt; which brought my interface back up and I was able to SSH back into the machine.&lt;/p&gt;
-
-&lt;p&gt;Where the result of &lt;code&gt;ifconfig&lt;/code&gt; was previously&amp;hellip;&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ ifconfig
-em1 Link encap:Ethernet HWaddr a4:ba:db:4d:0f:82
-inet addr:10.0.0.4 Bcast:10.0.255.255 Mask:255.255.0.0
-UP BROADCAST RUNNING MULTICAST MTU:1500 Metric:1
-RX packets:74620 errors:0 dropped:0 overruns:0 frame:0
-TX packets:2094 errors:0 dropped:0 overruns:0 carrier:0
-collisions:0 txqueuelen:1000
-RX bytes:7873976 (7.8 MB) TX bytes:216238 (216.2 KB)
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;is now&amp;hellip;&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ ifconfig
-br0 Link encap:Ethernet HWaddr a4:ba:db:4d:0f:82
-inet addr:10.0.0.4 Bcast:10.0.255.255 Mask:255.255.0.0
-inet6 addr: fe80::a6ba:dbff:fe4d:f82/64 Scope:Link
-UP BROADCAST RUNNING MULTICAST MTU:1500 Metric:1
-RX packets:73075 errors:0 dropped:257 overruns:0 frame:0
-TX packets:2101 errors:0 dropped:0 overruns:0 carrier:0
-collisions:0 txqueuelen:0
-RX bytes:6283264 (6.2 MB) TX bytes:199006 (199.0 KB)
-
-em1 Link encap:Ethernet HWaddr a4:ba:db:4d:0f:82
-UP BROADCAST RUNNING MULTICAST MTU:1500 Metric:1
-RX packets:74620 errors:0 dropped:0 overruns:0 frame:0
-TX packets:2094 errors:0 dropped:0 overruns:0 carrier:0
-collisions:0 txqueuelen:1000
-RX bytes:7873976 (7.8 MB) TX bytes:216238 (216.2 KB)
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;So, I&amp;rsquo;m actually connecting to the bridge interface rather than the NIC.&lt;/p&gt;
-
-&lt;p&gt;Hopefully, this is just the beginning of an interesting adventure, in the meantime I&amp;rsquo;m going to read &lt;a href=&#34;http://keepingitclassless.net/2013/10/introduction-to-open-vswitch/&#34;&gt;this&lt;/a&gt; again.&lt;/p&gt;
-</description>
-    </item>
-    
-    <item>
-      <title>Installing oVirt</title>
-      <link>/post/2015/2015-04-13-ovirt-installation/</link>
-      <pubDate>Mon, 13 Apr 2015 00:00:00 +0000</pubDate>
-      
-      <guid>/post/2015/2015-04-13-ovirt-installation/</guid>
-      <description>&lt;p&gt;Installing &lt;a href=&#34;http://www.ovirt.org/Home&#34;&gt;oVirt&lt;/a&gt;, the upstream project of  &lt;a href=&#34;https://www.redhat.com/en/technologies/virtualization/enterprise-virtualization&#34;&gt;Red Hat&amp;rsquo;s Enterprise Virtualization&lt;/a&gt; product, and &lt;a href=&#34;https://www.vmware.com/products/vsphere/&#34;&gt;vSphere&lt;/a&gt; alternative.&lt;/p&gt;
-
-&lt;p&gt;I started this install on Fedora, using the latest release, 21, ignoring the oVirt website where it said &lt;em&gt;&amp;ldquo;Important: It is recommended that you install oVirt on Fedora 20&amp;rdquo;&lt;/em&gt;, assuming the latest is the greatest, only to find that oVirt is not available on Fedora 21.  This was the first bump on a rocky road.  I did start off installing on Fedora 20 but ended up using CentOS 7 instead.  If you&amp;rsquo;re interested in using Fedora 20, you can download it &lt;a href=&#34;http://torrents.fedoraproject.org/&#34;&gt;here&lt;/a&gt; or &lt;a href=&#34;http://www.cyberciti.biz/linux-news/fedora-linux-20-download-cd-dvd-iso/&#34;&gt;here&lt;/a&gt;.&lt;/p&gt;
-
-&lt;p&gt;The main issue I found was DNS; resolving the server&amp;rsquo;s hostname.  I&amp;rsquo;m doing this on a private lab network, and haven&amp;rsquo;t got round to setting up a DNS server yet, so I had to configure my hosts file and set up &lt;a href=&#34;http://www.thekelleys.org.uk/dnsmasq/doc.html&#34;&gt;dnsmasq&lt;/a&gt;. From oVirt&amp;rsquo;s troubleshooting page&amp;hellip;&lt;/p&gt;
-
-&lt;p&gt;*&amp;rdquo;&lt;strong&gt;When running engine-setup, I get the message &amp;ldquo;myhost.local did not resolve into an IP address&amp;rdquo;, but setting up bind locally is hard. Is there an easy way to spoof full DNS locally?&lt;/strong&gt;*
-&lt;em&gt;The easiest solution is to use dnsmasq for DNS. You then use the IP address of your engine as your DNS server, and in /etc/dnsmasq.conf you point to your regular DNS servers with &amp;ldquo;server=8.8.8.8&amp;rdquo; (for example). You will also need to open port 53 in iptables to enable computers on your home network to use this DNS server. To do this, add the line &amp;ldquo;-A INPUT -m state &amp;ndash;state NEW -m udp -p udp &amp;ndash;dport 53 -j ACCEPT&amp;rdquo; to your iptables configuration, remembering to add it also to any configuration files required to ensure that the option persists across reboots.&amp;rdquo;&lt;/em&gt;&lt;/p&gt;
-
-&lt;p&gt;First things first, after a minimal install of CentOS 7; update, reboot &amp;amp; install a few programs:
-- net-tools for the ifconfig command
-- vim as my text editor of choice
-- bind-utils to check my DNS
-- dnsmasq to set up my DNS&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ sudo yum update
-$ sudo reboot
-$ sudo yum -y install net-tools vim bind-utils dnsmasq
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;A quick check of the DNS shows the hostname is not resolving to my ip address:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ host 10.0.0.5
-Host 5.0.0.10.in-addr.arpa. not found: 3(NXDOMAIN)
-
-$ host oVirt-01
-oVirt-01.lab-test.local has address 127.0.53.53
-oVirt-01.lab-test.local mail is handled by 10 your-dns-needs-immediate-attention.dev.
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;Configure hosts file:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;# ==={ open up the hosts file }===
-$ sudo vim /etc/hosts
-127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
-::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
-# ==={ add in server ip address &amp;amp; fqdn }===
-10.0.0.5 oVirt-01.lab-test.local oVirt01
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;Configure dnsmasq:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ sudo systemctl enable /usr/lib/systemd/system/dnsmasq.service
-$ sudo systemctl start dnsmasq.service
-
-# ==={ open up the dnsmasq.conf file }===
-$ sudo vim /etc/dnsmasq.conf
-# ==={ add in your DNS servers, here I&#39;m just using Google&#39;s }===
-server=8.8.8.8
-server=8.8.4.4
-# ==={ add in the listen-address for the localhost }===
-listen-address=127.0.0.1
-# ==={ open up the resolv.conf file }===
-sudo vim /etc/resolv.conf
-# ==={ add in the localhost address as your first nameserver }===
-search lab-test.local
-nameserver 127.0.0.1
-nameserver 8.8.8.8
-nameserver 8.8.4.4
-# ==={ restart the dnsmasq service }===
-$ sudo systemctl restart dnsmasq.service
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;Right, let&amp;rsquo;s check our DNS again:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ host 10.90.0.5
-5.0.0.10.in-addr.arpa domain name pointer oVirt-01.lab-test.local.
-
-$ host oVirt-01
-oVirt-01.lab-test.local has address 10.0.0.5
-oVirt-01.lab-test.local mail is handled by 10 your-dns-needs-immediate-attention.dev.
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;Excellent, success!&lt;/p&gt;
-
-&lt;p&gt;I have to admit that the next bit concerning firewall settings I don&amp;rsquo;t fully understand, it has been added to my &lt;em&gt;&amp;lsquo;Things to research and understand&amp;rsquo;&lt;/em&gt; list.  But, this is what I did so I&amp;rsquo;ll add it here.  For those more knowledgeable than myself, please feel free to enlighten/correct me.&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;# ==={ this stops the firewalld service to use iptables instead }===
-$ sudo systemctl mask firewalld.service
-$ sudo systemctl stop firewalld
-$ sudo yum install iptables-services
-$ systemctl enable iptables
-$ systemctl start iptables
-
-# ==={ a quick check of iptables }===
-$ sudo iptables -L
-Chain INPUT (policy ACCEPT)
-target     prot opt source               destination
-
-Chain FORWARD (policy ACCEPT)
-target     prot opt source               destination
-
-Chain OUTPUT (policy ACCEPT)
-target     prot opt source               destination
-
-# ==={ add in the iptables line suggested by oVirt }===
-$ sudo iptables -A INPUT -m state --state NEW -m udp -p udp --dport 53 -j ACCEPT
-# ==={ and check iptables again }===
-$ sudo iptables -L
-Chain INPUT (policy ACCEPT)
-target     prot opt source               destination
-ACCEPT     udp  --  anywhere             anywhere             state NEW udp dpt:domain
-
-Chain FORWARD (policy ACCEPT)
-target     prot opt source               destination
-
-Chain OUTPUT (policy ACCEPT)
-target     prot opt source               destination
-
-# ==={ save the iptables configuration }===
-$ sudo iptables-save
-# Generated by iptables-save v1.4.21 on Thu Apr  9 16:58:37 2015
-*filter
-:INPUT ACCEPT [102:8210]
-:FORWARD ACCEPT [0:0]
-:OUTPUT ACCEPT [22:3728]
--A INPUT -p udp -m state --state NEW -m udp --dport 53 -j ACCEPT
-COMMIT
-# Completed on Thu Apr  9 16:58:37 2015
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;Again I don&amp;rsquo;t fully understand the next configuration concerning Network Manager.  I was aware of it reading Jason Brooks &lt;a href=&#34;http://blog.jebpages.com/archives/up-and-running-with-ovirt-3-1-edition/&#34;&gt;excellent oVirt documentation&lt;/a&gt; but not knowing why it was done, I actually didn&amp;rsquo;t do it initially.  My oVirt setup failed and so I added it in and the setup worked, so it obviously does something! *(Yep, added to the &lt;strong&gt;&amp;lsquo;Things to research and understand&amp;rsquo;&lt;/strong&gt; list!)*&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ sudo systemctl stop NetworkManager.service
-$ sudo systemctl mask NetworkManager.service
-ln -s &#39;/dev/null&#39; &#39;/etc/systemd/system/NetworkManager.service&#39;
-$ sudo service network start
-Starting network (via systemctl):                                                       [  OK  ]
-$ sudo chkconfig network on
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;And on to installing oVirt.  By the way, I&amp;rsquo;m just installing the All-in-One, on a single server, and pretty much accepting all the defaults.&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ sudo yum localinstall http://resources.ovirt.org/pub/yum-repo/ovirt-release35.rpm
-
-$ sudo yum install -y ovirt-engine-setup-plugin-allinone
-
-$ sudo engine-setup
-
-
-[ INFO  ] Stage: Initializing
-[ INFO  ] Stage: Environment setup
-          Configuration files: [&#39;/etc/ovirt-engine-setup.conf.d/10-packaging-aio.conf&#39;, &#39;/etc/ovirt-engine-setup.conf.d/10-packaging-jboss.conf&#39;, &#39;/etc/ovirt-engine-setup.conf.d/10-packaging.conf&#39;]
-          Log file: /var/log/ovirt-engine/setup/ovirt-engine-setup-20150409170730-i9jy0f.log
-          Version: otopi-1.3.1 (otopi-1.3.1-1.el7)
-[ INFO  ] Hardware supports virtualization
-[ INFO  ] Stage: Environment packages setup
-[ INFO  ] Stage: Programs detection
-[ INFO  ] Stage: Environment setup
-[ INFO  ] Stage: Environment customization
-
-          --== PRODUCT OPTIONS ==--
-
-          Configure Engine on this host (Yes, No) [Yes]:
-          Configure WebSocket Proxy on this host (Yes, No) [Yes]:
-
-          --== PACKAGES ==--
-
-[ INFO  ] Checking for product updates...
-[ INFO  ] No product updates found
-
-          --== ALL IN ONE CONFIGURATION ==--
-# ==={ It&#39;s important to answer Yes to this next question if you&#39;re setting up the oVirt-engine node to also run VMs }===
-          Configure VDSM on this host? (Yes, No) [No]: Yes
-          Local storage domain path [/var/lib/images]:
-          Local storage domain name [local_storage]:
-
-          --== NETWORK CONFIGURATION ==--
-
-          Host fully qualified DNS name of this server [oVirt-01.lab-test.local]:
-
-          --== DATABASE CONFIGURATION ==--
-
-          Where is the Engine database located? (Local, Remote) [Local]:
-          Setup can configure the local postgresql server automatically for the engine to run. This may conflict with existing applications.
-          Would you like Setup to automatically configure postgresql and create Engine database, or prefer to perform that manually? (Automatic, Manual) [Automatic]:
-
-          --== OVIRT ENGINE CONFIGURATION ==--
-
-          Engine admin password:
-          Confirm engine admin password:
-          Application mode (Virt, Gluster, Both) [Both]:
-
-          --== PKI CONFIGURATION ==--
-
-          Organization name for certificate [ab-testing.dev]:
-
-          --== APACHE CONFIGURATION ==--
-
-          Setup can configure the default page of the web server to present the application home page. This may conflict with existing applications.
-          Do you wish to set the application as the default page of the web server? (Yes, No) [Yes]:
-          Setup can configure apache to use SSL using a certificate issued from the internal CA.
-          Do you wish Setup to configure that, or prefer to perform that manually? (Automatic, Manual) [Automatic]:
-
-          --== SYSTEM CONFIGURATION ==--
-
-          Configure an NFS share on this server to be used as an ISO Domain? (Yes, No) [Yes]:
-          Local ISO domain path [/var/lib/exports/iso]:
-          Local ISO domain ACL - note that the default will restrict access to oVirt-01.lab-test.local only, for security reasons [oVirt-01.lab-test.local(rw)]:
-          Local ISO domain name [ISO_DOMAIN]:
-
-          --== MISC CONFIGURATION ==--
-
-
-          --== END OF CONFIGURATION ==--
-
-[ INFO  ] Stage: Setup validation
-[WARNING] Less than 16384MB of memory is available
-
-          --== CONFIGURATION PREVIEW ==--
-
-          Application mode                        : both
-          Update Firewall                         : False
-          Host FQDN                               : oVirt-01.lab-test.local
-          Engine database name                    : engine
-          Engine database secured connection      : False
-          Engine database host                    : localhost
-          Engine database user name               : engine
-          Engine database host name validation    : False
-          Engine database port                    : 5432
-          Engine installation                     : True
-          NFS setup                               : True
-          PKI organization                        : lab-test.local
-          NFS mount point                         : /var/lib/exports/iso
-          NFS export ACL                          : oVirt-01.lab-test.local(rw)
-          Configure VDSM on this host             : True
-          Local storage domain directory          : /var/lib/images
-          Configure local Engine database         : True
-          Set application as default page         : True
-          Configure Apache SSL                    : True
-          Configure WebSocket Proxy               : True
-          Engine Host FQDN                        : oVirt-01.lab-test.local
-
-          Please confirm installation settings (OK, Cancel) [OK]:
-[ INFO  ] Stage: Transaction setup
-[ INFO  ] Stopping engine service
-[ INFO  ] Stopping ovirt-fence-kdump-listener service
-[ INFO  ] Stopping websocket-proxy service
-[ INFO  ] Stage: Misc configuration
-[ INFO  ] Stage: Package installation
-[ INFO  ] Stage: Misc configuration
-[ INFO  ] Initializing PostgreSQL
-[ INFO  ] Creating PostgreSQL &#39;engine&#39; database
-[ INFO  ] Configuring PostgreSQL
-[ INFO  ] Creating/refreshing Engine database schema
-[ INFO  ] Creating CA
-[ INFO  ] Configuring WebSocket Proxy
-[ INFO  ] Generating post install configuration file &#39;/etc/ovirt-engine-setup.conf.d/20-setup-ovirt-post.conf&#39;
-[ INFO  ] Stage: Transaction commit
-[ INFO  ] Stage: Closing up
-[ INFO  ] Restarting nfs services
-[ ERROR ] Failed to execute stage &#39;Closing up&#39;: Command &#39;/bin/systemctl&#39; failed to execute
-[ INFO  ] Stage: Clean up
-          Log file is located at /var/log/ovirt-engine/setup/ovirt-engine-setup-20150409170730-i9jy0f.log
-[ INFO  ] Generating answer file &#39;/var/lib/ovirt-engine/setup/answers/20150409171042-setup.conf&#39;
-[ INFO  ] Stage: Pre-termination
-[ INFO  ] Stage: Termination
-[ ERROR ] Execution of setup failed
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;This is when I configured NetworkManager, and started again:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ sudo engine-cleanup
-$ sudo engine-setup
-[ INFO  ] Stage: Initializing
-[ INFO  ] Stage: Environment setup
-          Configuration files: [&#39;/etc/ovirt-engine-setup.conf.d/10-packaging-aio.conf&#39;, &#39;/etc/ovirt-engine-setup.conf.d/10-packaging-jboss.conf&#39;, &#39;/etc/ovirt-engine-setup.conf.d/10-packaging.conf&#39;, &#39;/etc/ovirt-engine-setup.conf.d/20-setup-aio.conf&#39;, &#39;/etc/ovirt-engine-setup.conf.d/20-setup-ovirt-post.conf&#39;]
-          Log file: /var/log/ovirt-engine/setup/ovirt-engine-setup-20150409171624-ry3uj4.log
-          Version: otopi-1.3.1 (otopi-1.3.1-1.el7)
-[ INFO  ] Stage: Environment packages setup
-[ INFO  ] Stage: Programs detection
-[ INFO  ] Stage: Environment setup
-[ INFO  ] Stage: Environment customization
-
-          --== PRODUCT OPTIONS ==--
-
-
-          --== PACKAGES ==--
-
-[ INFO  ] Checking for product updates...
-[ INFO  ] No product updates found
-
-          --== ALL IN ONE CONFIGURATION ==--
-
-
-          --== NETWORK CONFIGURATION ==--
-
-
-          --== DATABASE CONFIGURATION ==--
-
-
-          --== OVIRT ENGINE CONFIGURATION ==--
-
-          Skipping storing options as database already prepared
-
-          --== PKI CONFIGURATION ==--
-
-
-          --== APACHE CONFIGURATION ==--
-
-
-          --== SYSTEM CONFIGURATION ==--
-
-
-          --== MISC CONFIGURATION ==--
-
-
-          --== END OF CONFIGURATION ==--
-
-[ INFO  ] Stage: Setup validation
-[WARNING] Less than 16384MB of memory is available
-[ INFO  ] Cleaning stale zombie tasks
-
-          --== CONFIGURATION PREVIEW ==--
-
-          Update Firewall                         : False
-          Host FQDN                               : oVirt-01.lab-test.local
-          Engine database name                    : engine
-          Engine database secured connection      : False
-          Engine database host                    : localhost
-          Engine database user name               : engine
-          Engine database host name validation    : False
-          Engine database port                    : 5432
-          Engine installation                     : True
-          NFS mount point                         : /var/lib/exports/iso
-          Configure WebSocket Proxy               : True
-          Engine Host FQDN                        : oVirt-01.lab-test.local
-
-          Please confirm installation settings (OK, Cancel) [OK]:
-[ INFO  ] Cleaning async tasks and compensations
-[ INFO  ] Checking the Engine database consistency
-[ INFO  ] Stage: Transaction setup
-[ INFO  ] Stopping engine service
-[ INFO  ] Stopping ovirt-fence-kdump-listener service
-[ INFO  ] Stopping websocket-proxy service
-[ INFO  ] Stage: Misc configuration
-[ INFO  ] Stage: Package installation
-[ INFO  ] Stage: Misc configuration
-[ INFO  ] Backing up database localhost:engine to &#39;/var/lib/ovirt-engine/backups/engine-20150409171646.q2VAjg.dump&#39;.
-[ INFO  ] Creating/refreshing Engine database schema
-[ INFO  ] Configuring WebSocket Proxy
-[ INFO  ] Generating post install configuration file &#39;/etc/ovirt-engine-setup.conf.d/20-setup-ovirt-post.conf&#39;
-[ INFO  ] Stage: Transaction commit
-[ INFO  ] Stage: Closing up
-
-          --== SUMMARY ==--
-
-[WARNING] Less than 16384MB of memory is available
-          SSH fingerprint: D4:A0:EB:C5:5F:20:2D:74:B0:0B:D6:4D:27:22:45:58
-          Internal CA C5:6C:90:54:4E:B6:0B:1F:AC:B0:81:42:17:F6:01:48:45:57:9E:12
-          Web access is enabled at:
-              http://oVirt-01.lab-test.local:80/ovirt-engine
-              https://oVirt-01.lab-test.local:443/ovirt-engine
-          In order to configure firewalld, copy the files from
-              /etc/ovirt-engine/firewalld to /etc/firewalld/services
-              and execute the following commands:
-              firewall-cmd -service ovirt-postgres
-              firewall-cmd -service ovirt-https
-              firewall-cmd -service ovirt-fence-kdump-listener
-              firewall-cmd -service ovirt-websocket-proxy
-              firewall-cmd -service ovirt-nfs
-              firewall-cmd -service ovirt-http
-          The following network ports should be opened:
-              tcp:111
-              tcp:2049
-              tcp:32803
-              tcp:443
-              tcp:5432
-              tcp:6100
-              tcp:662
-              tcp:80
-              tcp:875
-              tcp:892
-              udp:111
-              udp:32769
-              udp:662
-              udp:7410
-              udp:875
-              udp:892
-          An example of the required configuration for iptables can be found at:
-              /etc/ovirt-engine/iptables.example
-
-          --== END OF SUMMARY ==--
-
-[ INFO  ] Starting engine service
-[ INFO  ] Restarting httpd
-[ INFO  ] Stage: Clean up
-          Log file is located at /var/log/ovirt-engine/setup/ovirt-engine-setup-20150409171624-ry3uj4.log
-[ INFO  ] Generating answer file &#39;/var/lib/ovirt-engine/setup/answers/20150409171724-setup.conf&#39;
-[ INFO  ] Stage: Pre-termination
-[ INFO  ] Stage: Termination
-[ INFO  ] Execution of setup completed successfully
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;A look at the iptables configuration:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ sudo vim /etc/sysconfig/iptables
-=====
-# oVirt default firewall configuration. Automatically generated by vdsm bootstrap script.
-*filter
-:INPUT ACCEPT [0:0]
-:FORWARD ACCEPT [0:0]
-:OUTPUT ACCEPT [10765:598664]
--A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
--A INPUT -p icmp -j ACCEPT
--A INPUT -i lo -j ACCEPT
-# vdsm
--A INPUT -p tcp --dport 54321 -j ACCEPT
-# SSH
--A INPUT -p tcp --dport 22 -j ACCEPT
-# snmp
--A INPUT -p udp --dport 161 -j ACCEPT
-# DNS
--A INPUT -m state --state NEW -m udp -p udp --dport 53 -j ACCEPT
-
-# libvirt tls
--A INPUT -p tcp --dport 16514 -j ACCEPT
-
-# guest consoles
--A INPUT -p tcp -m multiport --dports 5900:6923 -j ACCEPT
--A INPUT -p tcp -m multiport --dports 5634:6166 -j ACCEPT
-
-# migration
--A INPUT -p tcp -m multiport --dports 49152:49216 -j ACCEPT
--A INPUT -p tcp -m state --state NEW
-
-# Reject any other input traffic
--A INPUT -j REJECT --reject-with icmp-host-prohibited
--A FORWARD -m physdev ! --physdev-is-bridged -j REJECT --reject-with icmp-host-prohibited
-COMMIT
-~
-~
-~
-~
-~
-~
-&amp;quot;/etc/sysconfig/iptables&amp;quot; 33L, 969C
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;Let&amp;rsquo;s visit the server in a web browser; &lt;a href=&#34;http://oVirt-01.lab-test.local:80/ovirt-engine&#34;&gt;http://oVirt-01.lab-test.local:80/ovirt-engine&lt;/a&gt; sign in using username &lt;em&gt;admin&lt;/em&gt; and the password configured during setup and there we have our oVirt management portal:&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&#34;{{ site.url }}/images/ovirt-mgmt-portal1.png&#34; alt=&#34;oVirt screenshot&#34; /&gt;&lt;/p&gt;
-</description>
-    </item>
-    
-    <item>
-      <title>Introducing my brother to Git</title>
-      <link>/post/2015/2015-04-02-git-for-my-brother-intro/</link>
-      <pubDate>Thu, 02 Apr 2015 00:00:00 +0000</pubDate>
-      
-      <guid>/post/2015/2015-04-02-git-for-my-brother-intro/</guid>
-      <description>&lt;p&gt;I recently bought a &lt;a href=&#34;http://goo.gl/VFZV5v&#34;&gt;book on Git&lt;/a&gt; Version Control, and my brother and girlfriend both looked at me weirdly and asked why I had bought a book on how to be a git.  Har-de-har-har.  I started trying to explain what it actually was, and my &lt;a href=&#34;http://cargocollective.com/richardjamesphoenix/About&#34;&gt;brother&lt;/a&gt; was kinda interested.  So, this is an attempt to explain it to him, in order to better understand it myself.&lt;/p&gt;
-
-&lt;p&gt;&lt;strong&gt;What is Git?&lt;/strong&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://git-scm.herokuapp.com/&#34;&gt;Git&lt;/a&gt; is a &lt;em&gt;Distributed Version Control System&lt;/em&gt; created to keep track of the building and development of the core &lt;a href=&#34;http://www.linux.com/&#34;&gt;Linux&lt;/a&gt; operating system.  It&amp;rsquo;s used to reliably manage changes made to a project and keep an accurate record of the evolution of the project.  &lt;em&gt;Git&lt;/em&gt; is used mainly with programming &lt;a href=&#34;http://www.linfo.org/source_code.html&#34;&gt;source code&lt;/a&gt;, but it can also be used with a variety of files, mainly text, you might want to manipulate and track over time.&lt;/p&gt;
-
-&lt;p&gt;&lt;strong&gt;Oh right, so what&amp;rsquo;s version control, then?&lt;/strong&gt;&lt;/p&gt;
-
-&lt;p&gt;Yeah, okay, it still sounds a bit like an obscure programmer&amp;rsquo;s tool, right?  Version control is pretty much what it sounds like, it&amp;rsquo;s a method for managing the state of a project, through controlling the different versions created when changes are made to it.  Here&amp;rsquo;s a project you&amp;rsquo;re working on:&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;You create a file and name it: &lt;code&gt;filename&lt;/code&gt;&lt;/li&gt;
-&lt;li&gt;You change the file, add content to it, delete content from it, and create a new file with a similar but different name to differentiate it from, but associate it with, the original file: &lt;code&gt;filename-VERSION 2&lt;/code&gt;&lt;/li&gt;
-&lt;li&gt;You try something different to a section of the file, a &lt;em&gt;wild idea&lt;/em&gt; that you&amp;rsquo;re not sure you want to continue with, and create another new, similar but slightly different, file: &lt;code&gt;filename-VERSION 2b&lt;/code&gt;&lt;/li&gt;
-&lt;li&gt;You do some more work on the original file, without the &lt;em&gt;wild idea&lt;/em&gt; in it, and when you&amp;rsquo;re done create another file with a different name, so you know it has the most recent changes in it: &lt;code&gt;filename-VERSION 3&lt;/code&gt;&lt;/li&gt;
-&lt;li&gt;You ask your friend to read through what you&amp;rsquo;ve done. They send back a file with their idea/viewpoint/error checking in it, renamed so you know it&amp;rsquo;s different to your original file: &lt;code&gt;filename-VERSION 3-James&lt;/code&gt;&lt;/li&gt;
-&lt;li&gt;Meanwhile, you continue with your previous &lt;em&gt;wild idea&lt;/em&gt;, saving an updated version of it: &lt;code&gt;filename-VERSION 2c&lt;/code&gt;&lt;/li&gt;
-&lt;li&gt;You like your &lt;em&gt;wild idea&lt;/em&gt; and keep it in the file, so now it&amp;rsquo;s part of the main, original file: &lt;code&gt;filename-VERSION 3c&lt;/code&gt;&lt;/li&gt;
-&lt;li&gt;You get round to making changes based on your friend/colleague&amp;rsquo;s suggestions: &lt;code&gt;filename-VERSION 3c-updated&lt;/code&gt;&lt;/li&gt;
-&lt;li&gt;You realise your &lt;em&gt;wild idea&lt;/em&gt; is actually rubbish and discard it: &lt;code&gt;filename-VERSION 4-LATEST&lt;/code&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;So now you have a project folder with these files in:&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;code&gt;filename&lt;/code&gt;&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;filename-VERSION 2&lt;/code&gt;&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;filename-VERSION 2b&lt;/code&gt;&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;filename-VERSION 2c&lt;/code&gt;&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;filename-VERSION 3&lt;/code&gt;&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;filename-VERSION 3c&lt;/code&gt;&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;filename-VERSION 3c-updated&lt;/code&gt;&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;filename-VERSION 3-James&lt;/code&gt;&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;filename-VERSION 4-LATEST&lt;/code&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;All of which are basically the same file with changes made to it.  And to be honest you&amp;rsquo;re not entirely sure if that last file has both the suggestions from your friend in it and the most recent changes and not the &lt;em&gt;wild idea&lt;/em&gt; still in there.  I&amp;rsquo;ve certainly been there before, and it&amp;rsquo;s a messy uncertain experience.  Add to this further collaboration with other project members and you&amp;rsquo;ve got a situation where no-one knows for sure if they&amp;rsquo;re working on the most recent up-to-date version of the project files.&lt;/p&gt;
-
-&lt;p&gt;Arrrghhh &lt;em&gt;CATASTROPHE!&lt;/em&gt;&lt;/p&gt;
-
-&lt;p&gt;With a version control system like &lt;em&gt;Git&lt;/em&gt; you don&amp;rsquo;t have to worry about creating a confusing jumble of filenames.  &lt;em&gt;Git&lt;/em&gt; allows you to just concentrate on your project and all the content within it.  &lt;em&gt;Git&lt;/em&gt; takes care of which version of the file you&amp;rsquo;re working on, logs the history of the changes that have been made, enables you to try &lt;em&gt;wild ideas&lt;/em&gt; without buggering up the original file, revert to previous versions and collaborate easily with others.&lt;/p&gt;
-
-&lt;p&gt;&lt;strong&gt;Okay, I understand that, but I don&amp;rsquo;t understand what Git actually is &amp;hellip; like is it a standalone program?&lt;/strong&gt;&lt;/p&gt;
-
-&lt;p&gt;Well, kinda, but it&amp;rsquo;s more of a system than a program. Once &lt;em&gt;Git&lt;/em&gt; is installed you&amp;rsquo;ll have access to a set of instructions you can use in the &lt;a href=&#34;https://en.wikipedia.org/wiki/Command-line_interface&#34;&gt;command line/terminal&lt;/a&gt; of your computer.&lt;/p&gt;
-
-&lt;p&gt;Here, let me show you.  In the &lt;em&gt;Git&lt;/em&gt; command line on Windows I&amp;rsquo;m going to start a new project, in a folder called &lt;code&gt;git-formybrother&lt;/code&gt;, that contains a single file called &lt;code&gt;test-file.txt&lt;/code&gt;.  Here, the &lt;code&gt;$&lt;/code&gt; is a command prompt, where the instructions to the computer are typed.&lt;/p&gt;
-
-&lt;p&gt;{% highlight bash linenos %}
-Welcome to Git (version 1.9.5-preview20141217)&lt;/p&gt;
-
-&lt;p&gt;Run &amp;lsquo;git help git&amp;rsquo; to display the help index.
-Run &amp;lsquo;git help &lt;command&gt;&amp;rsquo; to display help for specific commands.&lt;/p&gt;
-
-&lt;p&gt;$ git init  # Initialise the Git repository
-Initialized empty Git repository in C:/git-formybrother/.git/&lt;/p&gt;
-
-&lt;p&gt;$ ls  # List the contents of the folder/repository
-test-file.txt&lt;/p&gt;
-
-&lt;p&gt;$ git status  # Check the status of the Git repository
-On branch master&lt;/p&gt;
-
-&lt;p&gt;Initial commit&lt;/p&gt;
-
-&lt;p&gt;Untracked files:
-  (use &amp;ldquo;git add &lt;file&gt;&amp;hellip;&amp;rdquo; to include in what will be committed)&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;    test-file.txt
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;nothing added to commit but untracked files present (use &amp;ldquo;git add&amp;rdquo; to track)&lt;/p&gt;
-
-&lt;p&gt;$ git add test-file.txt  # Add test-file.txt to Git to be tracked&lt;/p&gt;
-
-&lt;p&gt;$ git commit -am &amp;ldquo;started new project&amp;rdquo;  #  Commit the current state of the files, with a short message, to your Git history
-[master (root-commit) 3110c11] started new project
- 1 file changed, 0 insertions(+), 0 deletions(-)
- create mode 100644 test-file.txt&lt;/p&gt;
-
-&lt;p&gt;$ git status  # Check again the status of the Git repository
-On branch master
-nothing to commit, working directory clean
-{% endhighlight %}&lt;/p&gt;
-
-&lt;p&gt;So basically, we&amp;rsquo;ve just started a new project to be tracked by &lt;em&gt;Git&lt;/em&gt;, added a file to it and commited/saved the state of the project to the &lt;em&gt;Git&lt;/em&gt; log.&lt;/p&gt;
-
-&lt;p&gt;I realise not everyone is comfortable on the command line and this can scare them away, but there are a number of different graphical user interfaces &lt;a href=&#34;https://www.git-scm.com/downloads/guis&#34;&gt;(GUIs)&lt;/a&gt;, that can make it easier to deal with, and show a nice visual representation of your project, it&amp;rsquo;s development and the changes made to it.  This in itself can provide an incredibly useful overview of what&amp;rsquo;s going on in your project. Here&amp;rsquo;s our new project in the &lt;em&gt;Github for Windows&lt;/em&gt; client:&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&#34;{{ site.url }}/images/gfmb01-github-for-windows.png&#34; alt=&#34;Github for Windows screenshot&#34; /&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;strong&gt;Okay, but I&amp;rsquo;m not a software developer, do I really care?  Can I really be bothered?&lt;/strong&gt;&lt;/p&gt;
-
-&lt;p&gt;I&amp;rsquo;m not gonna lie, it&amp;rsquo;s great but it&amp;rsquo;s not magic, there&amp;rsquo;s a learning curve involved, and to be honest I don&amp;rsquo;t know if it&amp;rsquo;s a sensible way of managing more complicated files like &lt;a href=&#34;http://blog.martinfenner.org/2014/08/25/using-microsoft-word-with-git/&#34;&gt;MS Office files&lt;/a&gt;, but you should avoid MS Office anyway.  Even so, once you get the basics you&amp;rsquo;ll be creating and maintaining cleaner, clearer projects with more structure and accountability.  Have a go &lt;a href=&#34;https://try.github.io/levels/1/challenges/1&#34;&gt;here&lt;/a&gt;, see what you think&amp;hellip;&lt;/p&gt;
-</description>
-    </item>
-    
-    <item>
-      <title>Notes on Python: Lists</title>
-      <link>/post/2015/03/the-python-list/</link>
-      <pubDate>Tue, 31 Mar 2015 00:00:00 +0000</pubDate>
-      
-      <guid>/post/2015/03/the-python-list/</guid>
-      <description>&lt;p&gt;Like the numerable daily lists made with pen and paper, the list in Python is an incredibly handy way to store information, but with extra &lt;em&gt;power&lt;/em&gt;.&lt;/p&gt;
-
-&lt;p&gt;We can start with an empty list:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;&amp;gt;&amp;gt;&amp;gt; switches = []
-&amp;gt;&amp;gt;&amp;gt; type(switches)
-&amp;lt;type &#39;list&#39;&amp;gt;
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;add to it:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;&amp;gt;&amp;gt;&amp;gt; switches.append(&#39;switch-01&#39;)
-&amp;gt;&amp;gt;&amp;gt; switches
-[&#39;switch-01&#39;]
-&amp;gt;&amp;gt;&amp;gt; switches.append(&#39;switch-02&#39;)
-&amp;gt;&amp;gt;&amp;gt; switches
-[&#39;switch-01&#39;, &#39;switch-02&#39;]
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;Create another list, and concatenate these two lists into a new list:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;&amp;gt;&amp;gt;&amp;gt; routers = [&#39;router-03&#39;, &#39;router-01&#39;, &#39;router-02&#39;]
-&amp;gt;&amp;gt;&amp;gt; routers
-[&#39;router-03&#39;, &#39;router-01&#39;, &#39;router-02&#39;]
-&amp;gt;&amp;gt;&amp;gt; devices = switches + routers
-&amp;gt;&amp;gt;&amp;gt; devices
-[&#39;switch-01&#39;, &#39;switch-02&#39;, &#39;router-03&#39;, &#39;router-01&#39;, &#39;router-02&#39;]
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;Loop through our new list:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;&amp;gt;&amp;gt;&amp;gt;count = 0
-&amp;gt;&amp;gt;&amp;gt;for device in devices:
-...		count += 1
-...     print &#39;Hostname:&#39;, device
-...
-Hostname: switch-01
-Hostname: switch-02
-Hostname: router-03
-Hostname: router-01
-Hostname: router-02
-&amp;gt;&amp;gt;&amp;gt;print &#39;There are&#39;, count, &#39;devices.&#39;
-There are 5 devices.
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;Sort the list:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;&amp;gt;&amp;gt;&amp;gt; devices
-[&#39;switch-01&#39;, &#39;switch-02&#39;, &#39;router-03&#39;, &#39;router-01&#39;, &#39;router-02&#39;]
-&amp;gt;&amp;gt;&amp;gt; devices.sort()
-&amp;gt;&amp;gt;&amp;gt; devices
-[&#39;router-01&#39;, &#39;router-02&#39;, &#39;router-03&#39;, &#39;switch-01&#39;, &#39;switch-02&#39;]
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;Delete elements from the list:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;&amp;gt;&amp;gt;&amp;gt; devices.pop()
-&#39;switch-02&#39;
-&amp;gt;&amp;gt;&amp;gt; devices
-[&#39;router-01&#39;, &#39;router-02&#39;, &#39;router-03&#39;, &#39;switch-01&#39;]
-&amp;gt;&amp;gt;&amp;gt;
-&amp;gt;&amp;gt;&amp;gt; devices.remove(&#39;router-03&#39;)
-&amp;gt;&amp;gt;&amp;gt; devices
-[&#39;router-01&#39;, &#39;router-02&#39;, &#39;switch-01&#39;]
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;Find the number of items in our list, and the maximum and minimum elements in the list:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;&amp;gt;&amp;gt;&amp;gt; len(devices)
-3
-&amp;gt;&amp;gt;&amp;gt; max(devices)
-&#39;switch-01&#39;
-&amp;gt;&amp;gt;&amp;gt; min(devices)
-&#39;router-01&#39;
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;Select elements in the list through their index (not forgetting that python lists are zero-indexed!):&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;&amp;gt;&amp;gt;&amp;gt; devices[0]
-&#39;router-01&#39;
-&amp;gt;&amp;gt;&amp;gt; devices[1]
-&#39;router-02&#39;
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;Lists can be really useful as an interim holding bay while parsing a file, or extracting information from a directory, such as a folder of &lt;em&gt;show run&lt;/em&gt; or &lt;em&gt;show version&lt;/em&gt; files.&lt;/p&gt;
-
-&lt;p&gt;This brief summary really is brief and pulls heavily from others:&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;a href=&#34;http://www.pythonlearn.com/html-009/book009.html&#34;&gt;Python for Informatics&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;&lt;a href=&#34;https://developers.google.com/edu/python/lists&#34;&gt;Google Python Course&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;&lt;a href=&#34;http://www.diveintopython.net/native_data_types/lists.html&#34;&gt;Dive Into Python&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;&lt;a href=&#34;http://networkstatic.net/python-tutorial-functions-and-passing-lists-and-dictionaries-with-simple-examples/&#34;&gt;Brent Salisbury Python Tutorial&lt;/a&gt;&lt;/li&gt;
-&lt;/ul&gt;
 </description>
     </item>
     
