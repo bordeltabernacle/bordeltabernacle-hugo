@@ -110,14 +110,17 @@ ul, ol {
 	margin-left: 3em;
 }
 code {
-	font-size:1.4em;
+	font-size:0.9em;
 	background: #eee;
+    padding: 0.3em;
+    border-radius: 0.25em;
 }
 pre {
-	font-size: 0.8em;
+	font-size: 1.2em;
 	line-height: 2em;
 	background: #eee;
-	padding: 1em;
+    border-radius: 0.25em;
+	padding: 0.5em;
 	word-break: break-all;
 	word-wrap: break-word;
 	white-space: pre;
