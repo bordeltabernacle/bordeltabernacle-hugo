@@ -15,5 +15,5 @@ my MSc I started working for a large UK VAR as an Alpha/Beta Testing Lab Enginee
 Very quickly, because of the little Python knowledge I had, I became the
 *'Scripting Guy'*, something that unnerved me at first, but that I quickly embraced.
 I am now a Systems Engineer with the same company, focusing on network automation,
-writing code and building stuff.
+writing code, sharing knowledge, improving operations and building stuff.
 
