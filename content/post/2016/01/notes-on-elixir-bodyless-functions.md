@@ -19,8 +19,6 @@ function clause.
 
 EDIT(14/01/16): I've added *Protocols*.
 
-<!--more-->
-
 As far as I know, the bodyless function clause is only something used within
 Elixir & Erlang, and possibly Prolog. The [Erlang docs][ed] give an interesting
 explanation of what happens when a function is called.  This explanation hints

@@ -1,16 +1,12 @@
 ---
-layout: post
 title: "Notes On Python: Truth and Modulo"
-date: "2015-10-12 11:14"
-tags: python
-
+date: 2015-10-12
+tags: [ "python" ]
 ---
 
 Today I learnt how to be less verbose when using the `%` operator in Python.
 
 **SPOILER:** I learnt this while trying to apply a functional approach to the first problem on [Project Euler][pe] and I describe my answer here.
-
-<!--more-->
 
 So, to set the scene, the first problem on [Project Euler][pe] is presented as such:
 

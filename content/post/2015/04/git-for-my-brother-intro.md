@@ -1,13 +1,11 @@
 ---
-layout: post
 title:  "Introducing my brother to Git"
 date:   2015-04-02
-tags:   git
+tags:   [ "git" ]
 ---
 
 I recently bought a [book on Git][bookOnGit] Version Control, and my brother and girlfriend both looked at me weirdly and asked why I had bought a book on how to be a git.  Har-de-har-har.  I started trying to explain what it actually was, and my [brother][brother] was kinda interested.  So, this is an attempt to explain it to him, in order to better understand it myself.
 
-<!--more-->
 **What is Git?**
 
 [Git][1] is a *Distributed Version Control System* created to keep track of the building and development of the core [Linux][2] operating system.  It's used to reliably manage changes made to a project and keep an accurate record of the evolution of the project.  *Git* is used mainly with programming [source code][sourceCode], but it can also be used with a variety of files, mainly text, you might want to manipulate and track over time.

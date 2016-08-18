@@ -8,8 +8,6 @@ Following on from my [last post][nopm] about pattern-matching, `maps`, the main
 key-value store in Elixir, have an interesting capability that sets them apart
 from other data structures with regards to pattern-matching.
 
-<!--more-->
-
 A `map` can actually pattern-match on just a subset of a value. The key(s) in
 the pattern have to exist in the match, but the two structures don't have to
 mirror each other in the same way a `list` or a `tuple` has to.  For example:

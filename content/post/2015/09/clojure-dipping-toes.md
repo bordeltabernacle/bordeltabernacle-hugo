@@ -1,14 +1,11 @@
 ---
-layout: post
 title: "Notes on Clojure: Dipping My Toes In"
-date: "2015-09-04"
-tags: clojure
+date: 2015-09-04
+tags: [ "clojure" ]
 
 ---
 
 Maybe because I'm such a late arrival to this programming pastime, I feel a certain inadequacy, a need to over compensate.  Or maybe I just find it exciting learning new things, and I just want to get deeper and consume everything.  Anyway, I've been getting more interested in functional programming, I don't know why.  I'm not so embedded in object-oriented, and I've been trying to understand JavaScript's prototype-based programming, and if I'm honest, these concepts aren't yet meaningful enough to me to matter so much outside of syntax and the practicalities of how to write code, yet functional programming seems to make a certain amount of sense. Perhaps this will become an endeavour in proving myself wrong. So, I listened to [Carin Meier][cm] on [The Changelog][cl] and bought [her book][lc], and am going to start learning Clojure.
-
-<!--more-->
 
 [Leiningen][lngen] is the tool Carin recommends for getting started with Clojure, so let's install that.
 Check Java is installed first:

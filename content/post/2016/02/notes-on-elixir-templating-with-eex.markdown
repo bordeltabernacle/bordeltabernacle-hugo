@@ -9,8 +9,6 @@ code inside strings and files.  It's used extensively in the Phoenix framework f
 templates, and recently I've started to use it to replace my Python scripts for generating
 Cisco config files.
 
-<!--more-->
-
 Like most templating engines EEx has various tags it uses for marking up your
 template:
 

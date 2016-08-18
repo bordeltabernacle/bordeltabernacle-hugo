@@ -8,14 +8,11 @@ Following on from my [previous post][pp], I want to take a look at *playbooks*,
 the mechanism Ansible uses for building and managing task automation. Playbooks
 are text files that declare the tasks you want carried out in a series of
 *plays*. This text file can then easily be re-used, shared, and version controlled.
-Let's have a look at how we use them then, yeah?
-
-<!--more-->
 
 Okay, so [previously][pp] we had an inventory file that listed the hosts in our
 lab network.
 
-~~~ini
+```ini
 [routers]
 router-one ansible_host=192.168.0.1
 router-two ansible_host=192.168.0.2
@@ -24,12 +21,11 @@ router-three ansible_host=192.168.0.3
 [routers:vars]
 ansible_user=vagrant
 ansible_password=vagrant
-~~~
+```
 
 Let's add our first playbook.  Playbooks are written as *yaml* files, a format equivalent to *json* or *xml* but intended to be more human readable. Be warned, *yaml* is very particular about whitespace. If we create a new file alongside out playbook called `get_inventory_info.yaml`, we'll use it to get the output from a `show inventory` command.
 
-{% raw %}
-~~~yaml
+```yaml
 ---
 - name: Get Inventory Information
   hosts: routers
@@ -43,8 +39,7 @@ Let's add our first playbook.  Playbooks are written as *yaml* files, a format e
           - show inventory
       register: inventory
     - debug: var=inventory
-~~~
-{% endraw %}
+```
 
 So, what's going on here?
 
@@ -54,7 +49,7 @@ So, what's going on here?
 * `tasks:` what follows is the list of tasks we want to carry out
 * `name: Send Show Inventory Command` is the name of our task
 * `ios_command:` this is [the module][am] we are using
-* {% raw %}`host: "{{ ansible_host }}"`{% endraw %}, {% raw %}`username: "{{ ansible_user }}"`{% endraw %} & {% raw %}`password: "{{ ansible_password }}"`{% endraw %} are the connection details we're going to use. The {% raw %}`{{ }}`{% endraw %} means that this is a variable. All variables exist within the Ansible environment you're in, in this case these variables are from the *inventory* file above. Doing this means we can loop through all the hosts in our *routers* group, and they can have different username/password combinations if needs be.
+* `host: "{{ ansible_host }}"`, `username: "{{ ansible_user }}"` & `password: "{{ ansible_password }}"` are the connection details we're going to use. The `{{ }}` means that this is a variable. All variables exist within the Ansible environment you're in, in this case these variables are from the *inventory* file above. Doing this means we can loop through all the hosts in our *routers* group, and they can have different username/password combinations if needs be.
 * `commands: - show inventory` is the command we'll be using.
 * `register: inventory` here we're storing the output of the task in the variable `inventory`
 * `debug: var=inventory` this will output the variable `inventory` to our terminal.
@@ -65,7 +60,7 @@ To run this we use the `ansible-playbook` command, along with the name of our pl
 
 OK, let's go...
 
-~~~json
+```json
 PLAY [Get Inventory Information] ***********************************************
 
 TASK [setup] *******************************************************************
@@ -77,20 +72,20 @@ PLAY RECAP *********************************************************************
 router-one                : ok=0    changed=0    unreachable=1    failed=0
 router-two               : ok=0    changed=0    unreachable=1    failed=0
 router-three             : ok=0    changed=0    unreachable=1    failed=0
-~~~
+```
 
 Arggh, whaa? This is because we're dealing with Cisco pets not server cattle. As I mentioned before, Ansible is trying to run some Python code on our hosts, which is not going to happen with Cisco IOS, we need to run the code on our local machine. So let's add the following to our *inventory* file:
 
-~~~ini
+```ini
 [routers:vars]
 ansible_connection=local
 ansible_user=vagrant
 ansible_password=vagrant
-~~~
+```
 
 That line there, `ansible_connection=local`, should take care of this problem for us.
 
-~~~json
+```json
 PLAY [Get Inventory Information] ***********************************************
 
 TASK [setup] *******************************************************************
@@ -166,13 +161,12 @@ PLAY RECAP *********************************************************************
 router-one                : ok=3    changed=0    unreachable=0    failed=0
 router-two                : ok=3    changed=0    unreachable=0    failed=0
 router-three              : ok=3    changed=0    unreachable=0    failed=0
-~~~
+```
 
 Yessss! Job's a good 'un, let's go home.
 Nah, not yet. We can smooth things out a bit. At the beginning of the output you can see a `[setup]` task being run, that is an Ansible default that gathers facts from the hosts, like operating system, ip address etc. However, because we're using `ansible_connection=local` this task is just gathering facts from the local machine, 3 times in this case! Totally useless. So we can add `gather_facts: no` to our playbook to avoid this time waster. We also don't need all of that output so, as this is *json* we can be a bit more selective about it by using `debug: var=inventory.stdout_lines[0]`. Ansible has a `provider` argument which can be a dictionary object which defines the connection to the host, meaning we can separate this information from our playbooks, and not have to repeat it in every playbook. Our playbook now looks like this:
 
-{% raw %}
-~~~yaml
+```yaml
 ---
 - name: Get Inventory Information
   gather_facts: no
@@ -185,13 +179,11 @@ Nah, not yet. We can smooth things out a bit. At the beginning of the output you
           - show inventory
       register: inventory
     - debug: var=inventory.stdout_lines[0]
-~~~
-{% endraw %}
+```
 
 To store group variables, such as `provider`, we can use a directory called *group_vars*. This directory name is pre-defined by Ansible. Within it we create a *yaml* file named after the group, *routers*. While we're at it, if we're creating a *routers* variable file, we can move the variables out of our inventory into it. So, in `group_vars/routers.yaml` we have...
 
-{% raw %}
-~~~yaml
+```yaml
 ---
 ansible_connection: local
 ansible_user: vagrant
@@ -200,24 +192,23 @@ provider:
   host: "{{ ansible_host }}"
   username: "{{ ansible_user }}"
   password: "{{ ansible_password }}"
-~~~
-{% endraw %}
+```
 
 Really, we shouldn't be writing our password down, should we? So let's delete the `ansible_password: vagrant` line and use the command line `--ask-pass` flag instead.
 
 Our inventory file now looks like this, just fyi:
 
-~~~ini
+```ini
 [routers]
 192.168.0.1
 192.168.0.2
 192.168.0.3
-~~~
+```
 
 I've removed the hostnames, just because, it doesn't really change anything, except the names in the output.
 If we run `ansible-playbook get_inventory_info.yaml -i inventory --ask-pass` we get a prompt for the password...
 
-~~~json
+```json
 SSH password:
 
 PLAY [Get Inventory Information] ***********************************************
@@ -266,12 +257,11 @@ PLAY RECAP *********************************************************************
 192.168.0.1                : ok=2    changed=0    unreachable=0    failed=0
 192.168.0.2                : ok=2    changed=0    unreachable=0    failed=0
 192.168.0.3                : ok=2    changed=0    unreachable=0    failed=0
-~~~
+```
 
 There, that's a bit clearer. If we want we can add a few commands in to our playbook. Let's change the name of it to `get_device_information.yaml` and change it to this:
 
-{% raw %}
-~~~yaml
+```yaml
 ---
 - name: Get Device Information
   gather_facts: no
@@ -287,12 +277,11 @@ There, that's a bit clearer. If we want we can add a few commands in to our play
           - sh ip int brief
       register: info
     - debug: var=info.stdout_lines
-~~~
-{% endraw %}
+```
 
 Run it. `ansible-playbook get_device_info.yaml -i inventory --ask-pass` and a brief moment later...
 
-~~~json
+```json
 SSH password:
 
 PLAY [Get Device Information] **************************************************
@@ -386,7 +375,7 @@ PLAY RECAP *********************************************************************
 192.168.0.1                : ok=2    changed=0    unreachable=0    failed=0
 192.168.0.2                : ok=2    changed=0    unreachable=0    failed=0
 192.168.0.3                : ok=2    changed=0    unreachable=0    failed=0
-~~~
+```
 
 Lovely, *now* we can go home.
 
@@ -395,6 +384,3 @@ There's more to do here, such as saving this output to file & sending configurat
 
 [pp]: https://bordeltabernacle.github.io/2016/08/01/starting-out-with-ansible-cisco-and-network-automation.html
 [am]: https://docs.ansible.com/ansible/ios_command_module.html
-
-
-

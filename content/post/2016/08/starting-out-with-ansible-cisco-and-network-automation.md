@@ -7,11 +7,7 @@ tags: [ "ansible", "cisco" ]
 Recently I've been spending more time exploring network automation, using
 homegrown scripts, Cisco's APIC-EM, and Ansible. I like Ansible, and since
 release 2.1, they've started including dedicated networking modules, which is
-great. I've only scratched the surface of Ansible, but I've already had great
-success with it in the lab. So, let's get it set up and doing our work for us,
-yeah?
-
-<!--more-->
+great. So, let's get it set up and doing our work for us, yeah?
 
 Ansible requires Python 2, and doesn't support Python 3. It also doesn't work
 with Windows as the control machine. So I'm going to install Ansible on an Ubuntu

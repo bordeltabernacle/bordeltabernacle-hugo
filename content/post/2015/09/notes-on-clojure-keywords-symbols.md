@@ -1,14 +1,10 @@
 ---
-layout: post
 title: "Notes on Clojure: Keywords & Symbols Confusion"
-date: "2015-09-25"
-tags: clojure
-
+date: 2015-09-25
+tags: [ "clojure" ]
 ---
 
 Having not used Clojure extensively yet, or really much at all, I'm still unsure as to when to use Keywords.  So I just spent a bit of time exploring them, and subsequently touched on Symbols too.  And in writing this post confused myself further in the process.  What you have here then is not a formed explanation of either Keywords or Symbols, but observations on their behaviour. While reading this, imagine me saying 'huh?' and scratching my head like Stan Laurel.
-
-<!--more-->
 
 Keywords are described in the [Clojure docs][cljdocs], within the Data Structures section, as such:
 

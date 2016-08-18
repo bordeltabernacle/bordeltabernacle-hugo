@@ -1,13 +1,10 @@
 ---
-layout: post
 title: "Notes on Django: Setting Up"
-date: "2015-09-03"
-tags: python django vagrant
+date: 2015-09-03
+tags: [ "python", "django", "vagrant" ]
 ---
 
 I'm starting to develop multiple Django projects, but am still referring to the *(excellent)* [Django tutorial][djt] to get set up, so I thought I'd write out the steps I take to set up a new Django project and it's associated development environment, just to help remember it and have an easy reference for the future.
-
-<!--more-->
 
 I work on my Django projects within a [Vagrant][v] environment.  This creates a nice, easy-to-use, isolated environment that is simple to bring up, tear down and replicate.  It also means I, controversially, don't use [virtualenv][ve], as Vagrant isolates things for me.  Though I admit, I'm still an amateur and am probably overlooking something important, especially as nothing I've made has yet made it into production.  To be honest I'd really like to move everything to [Docker][dkr] but I haven't yet had the time to properly learn Docker or explore the feasability of this.  One of the nice things about Vagrant is that I have a separate VM for my PostgreSQL database.  So, because I'm still learning Postgres, and run into migration problems when changing models, it is easy to just destroy and rebuild my database backend quickly.  This does however destroy any data I have, which currently isn't a big problem.  I want to put aside some time in my workflow for creating a script that populates the database with some basic data for development.  But I really need to spend some time learning how to properly deal with the database and migrations, of course.
 

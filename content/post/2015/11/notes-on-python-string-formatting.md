@@ -1,13 +1,11 @@
 ---
-layout: post
 title: "Notes on Python: String Formatting"
-tags: python
+date: 2015-11-12
+tags: [ "python" ]
 ---
 
 I've only recently realised I've been formatting text in Python in a really clunky manner.  The `.format()` string method is something that I've seen and even briefly used, but never stopped and got to know well enough to use more efficiently.
 So, that's what this is, a little *get to know you* with `string.format()`
-
-<!--more-->
 
 In it's simplest terms `.format()` takes a string that contains braces (`{}`), referred to as *replacement fields*, and replaces them with an argument.
 

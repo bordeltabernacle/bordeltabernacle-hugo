@@ -1,14 +1,10 @@
 ---
-layout: post
-title: 'Notes on JavaScript: The for loop'
-date: '2015-10-05 11:16'
-tags: javascript
-
+title: "Notes on JavaScript: The For Loop"
+date: 2015-10-05
+tags: [ "javascript" ]
 ---
 
 Being used to the simplicity of the Python `for` loop, it took me a little while to get used to the JavaScript `for` loop syntax.
-
-<!--more-->
 
 The `for` loop in Python is basically just the statement `for x in y do z`, where `y` is an iterable such as a list or a string, which is fairly self-explanatory.  For me, the JavaScript `for` loop didn't seem as transparent when I first started using it.
 

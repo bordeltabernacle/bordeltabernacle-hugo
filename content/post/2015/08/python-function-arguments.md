@@ -1,13 +1,10 @@
 ---
-layout: post
 title:  "Notes on Python: Optional Arguments"
 date:   2015-08-21
-tags:   python
+tags:   [ "python" ]
 ---
 
 Passing an optional argument to a Python function.  This is pretty basic stuff but I didn't know it, or at least it hadn't properly registered as a thing in my mind until today.  This post doesn't even take into consideration `*args` & `**kwargs`.
-
-<!--more-->
 
 Here we have a simple Python function, which takes one argument:
 

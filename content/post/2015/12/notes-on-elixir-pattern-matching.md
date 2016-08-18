@@ -1,14 +1,11 @@
 ---
-layout: post
 title: "Notes on Elixir: Pattern Matching"
-tags: elixir
-
+date: 2015-12-31
+tags: [ "elixir" ]
 ---
 
 One of the first things you'll learn about in Elixir is Pattern-Matching, a
 concept that re-thinks variable assignment and the meaning of the `=` symbol.
-
-<!--more-->
 
 In Elixir the `=` symbol is not used for *assignment*, where the expression `a =
 1` *assigns* the literal value `1` to the variable `a`.

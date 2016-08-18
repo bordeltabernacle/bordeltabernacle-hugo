@@ -9,8 +9,6 @@ centre with it. Nah, jokes, I checked out the [Nerves Project][np], and got
 `blinky`, the `Hello, World!` of embedded systems running.  I had a few false
 starts and wrong turns, so here's what ended up working for me.
 
-<!--more-->
-
 First I had to get the micro SD card that came with my rpi2 recognised on my
 laptop. I use Xubuntu 14.04.4 on an old Dell Latitude E6400 that has an inbuilt
 SD card reader. I removed all the files that came on the micro SD card, then I

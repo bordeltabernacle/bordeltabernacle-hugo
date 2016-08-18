@@ -1,13 +1,10 @@
 ---
-layout: post
-title: 'Notes on Python: Dictionaries'
-date: '2015-09-30 14:14'
-tags: python
+title: "Notes on Python: Dictionaries"
+date: 2015-09-30
+tags: [ "python" ]
 ---
 
 A dictionary is a key/value store.  A value is bound to a key, stored within a data structure, and referenced by this key.  In the common dictionary we all know the word is the key, and it's meaning is the value.  Dictionaries are indispensable to language, and in Python they are a fundamental data structure.
-
-<!--more-->
 
 We can create an empty dictionary object in a couple of ways.
 

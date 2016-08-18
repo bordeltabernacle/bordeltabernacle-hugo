@@ -1,14 +1,10 @@
 ---
-layout: post
-title: 'Notes on Clojure: Basic Data Structures'
-date: '2015-09-29 19:54'
-tags: clojure
-
+title: "Notes on Clojure: Basic Data Structures"
+date: 2015-09-29
+tags: [ "clojure" ]
 ---
 
 Let's have a wee gander at Clojure's data structures, shall we?
-
-<!--more-->
 
 Clojure has four fundamental data structures, also known as collections.
 

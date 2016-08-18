@@ -1,12 +1,10 @@
 ---
-layout: post
-title:  "Notes on Python: The Dictionary as Control Flow"
-tags:   python
+title: "Notes on Python: The Dictionary as Control Flow"
+date: 2015-11-05
+tags: [ "python" ]
 ---
 
 This is pretty much lifted straight from Mark Lutz's [Learning Python][lp].  It's just a different way of implementing a simple `if/elif/else` block akin to JavaScript's `switch/case` statement, or Clojure's `cond`.
-
-<!--more-->
 
 So, normally in Python if you want a series of potential outcomes based on an input value then you implement a series of `if/elif` statements...
 

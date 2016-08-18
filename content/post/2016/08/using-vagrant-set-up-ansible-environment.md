@@ -15,9 +15,7 @@ I've found that Vagrant is a fairly painless way to expose the network engineers
 I work with to Ansible. Once it's installed, I can share a zip file for them to
 unzip and run `vagrant up` and `vagrant ssh` from the command line, and they're
 in a working Ansible environment. And if they mess something up, they can just
-destroy it and start again, no bother. Let's get set up...
-
-<!--more-->
+destroy it and start again, no bother.
 
 Vagrant manages VM's through a hypervisor, with the default being Virtualbox,
 though you can use VMware if you have the extra cash. Therefore we need to
