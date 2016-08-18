@@ -1,8 +1,6 @@
-+++
-date = "2015-01-01"
-title = "About"
-
-+++
+---
+title: "About"
+---
 
 My name is Rob Phoenix. I was born just before the 1980's. I used to be an
 [artist](http://rm-phoenix.co.uk/), working in retail/hospitality/care/youth

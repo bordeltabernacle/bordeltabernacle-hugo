@@ -1,6 +1,6 @@
 baseurl = "/"
 languageCode = "en-gb"
-title = "bordeltabernacle"
+title = "Bordeltabernacle"
 newContentEditor = "nvim"
 theme = "crisp"
 
