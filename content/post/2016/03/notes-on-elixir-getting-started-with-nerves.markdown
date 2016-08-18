@@ -1,6 +1,6 @@
 ---
 title: "Notes on Elixir: Getting Started with Nerves"
-date: 2015-03-02
+date: 2016-03-02
 tags: [ "elixir", "nerves" ]
 ---
 
