@@ -6,14 +6,15 @@ tags: [ "linux" ]
 
 Environment variables are a pretty fundamental aspect of working with Linux, and
 are often assumed knowledge in blog posts and tutorials. But they're also one of
-those things that are so basic they can get overlooked, and I have to admit I've
-been able to survive using Linux without really knowing how to use and
-manipulate them. So, this is me taking the time to understand them better.
+those things that are so basic they can get overlooked. I have to admit I've
+been able to survive using Linux for a while now without really knowing how to
+use and manipulate them. So, this is me taking the time to understand them
+better.
 
 ## Environment? Variable?
 
-The environment is the configuration that is set up every time you start a new
-session on your computer, defining how the system operates.
+The environment is the configuration that is set up every time a new session is
+started on your computer, and defines how the system operates.
 
 A variable is a way of representing or storing information. This is usually
 achieved using a `KEY` and a corresponding `VALUE`. In the case of a traditional
@@ -23,13 +24,12 @@ this we can easily access meanings through their corresponding words.
 So, environment variables are pieces of information made available to your
 computer operating system in order to configure it appropriately.
 
-Linux environment variables are stored in the following format:
+Linux environment variables are stored in the following format, where it is
+possible to store multiple values, separating them with a colon.
 
 ```bash
 KEY=value1:value2:value3:...
 ```
-
-It's possible to store multiple values, separating them with a colon.
 
 ## Accessing Environment Variables
 
@@ -147,9 +147,11 @@ xterm
 ```
 
 Setting this only applies to the current shell session, it won't apply to any
-other terminal sessions I may start, so we have to `export` the variable.
-Setting this overwrites the current value of the variable, which is not always
-what we want to do. For instance we may need to add a new directory to the `PATH` variable, a list of all the directory locations the system will look in for commands. To append a new location we can do the following...
+other terminal sessions, so we have to `export` the variable. Setting this
+overwrites the current value of the variable, which is not always what we want
+to do. For instance we may need to add a new directory to the `PATH` variable,
+a list of all the directory locations the system will look for commands in. To
+append a new location we can do the following...
 
 ```bash
 ~ 13:55
