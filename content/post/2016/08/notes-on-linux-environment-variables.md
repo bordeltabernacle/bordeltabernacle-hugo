@@ -41,7 +41,7 @@ variables, and with `env` you can provide specific variables to a command in
 order to temporarily modify the environment for that command.
 
 ```bash
-% printenv | less                                        <
+% printenv | less
 USER=rob
 LANGUAGE=en_GB:en
 XDG_SEAT=seat0
@@ -88,7 +88,7 @@ is from my prompt rather than part of the command). To access specific values
 we follow `printenv` with the key we want.
 
 ```bash
-% printenv HOME                                          <
+% printenv HOME
 /home/rob
 ```
 
@@ -96,15 +96,15 @@ And we can temporarily alter our environment with `env`:
 
 ```bash
 ~ 13:35
-% printenv HOME                                          <
+% printenv HOME
 /home/rob
 
 ~ 13:35
-% env HOME=/another/path printenv HOME                   <
+% env HOME=/another/path printenv HOME
 /another/path
 
 ~ 13:35
-% printenv HOME                                          <
+% printenv HOME
 /home/rob
 ```
 
@@ -117,11 +117,11 @@ literal word...
 
 ```bash
 ~ 13:40
-% echo HOME                                              <
+% echo HOME
 HOME
 
 ~ 13:40
-% echo $HOME                                             <
+% echo $HOME
 /home/rob
 ```
 
@@ -132,18 +132,18 @@ a value to a key...
 
 ```bash
 ~ 13:45
-% printenv TERM                                          <
+% printenv TERM
 rxvt-unicode-256color
 
 ~ 13:45
-% TERM=xterm                                             <
+% TERM=xterm
 
 ~ 13:45
-% printenv TERM                                         <
+% printenv TERM
 xterm
 
 ~ 13:45
-% export TERM                                           <
+% export TERM
 ```
 
 Setting this only applies to the current shell session, it won't apply to any
@@ -155,14 +155,14 @@ append a new location we can do the following...
 
 ```bash
 ~ 13:55
-% printenv PATH                                         <
+% printenv PATH
 /home/rob/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/usr/local/go/bin:/home/rob/code/go/bin
 
 ~ 13:55
-% PATH=$PATH:/home/rob/code                             <
+% PATH=$PATH:/home/rob/code
 
 ~ 13:55
-% printenv PATH                                         <
+% printenv PATH
 /home/rob/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/usr/local/go/bin:/home/rob/code/go/bin:/home/rob/code
 ```
 
@@ -176,16 +176,16 @@ user-defined variables...
 
 ```bash
 ~ 14:01
-% printenv SOME_KEY                                     <
+% printenv SOME_KEY
 
 ~ 14:01 C:1
-% SOME_KEY=some_value                                   <
+% SOME_KEY=some_value
 
 ~ 14:01 C:1
-% export SOME_KEY                                       <
+% export SOME_KEY
 
 ~ 14:01
-% printenv SOME_KEY                                     <
+% printenv SOME_KEY
 some_value
 ```
 
@@ -195,20 +195,20 @@ To unset an environment variable we can use the `unset` command...
 
 ```bash
 ~ 14:41
-% printenv KEY                                           <
+% printenv KEY
 
 ~ 14:41 C:1
-% export KEY=value                                       <
+% export KEY=value
 
 ~ 14:41
-% printenv KEY                                           <
+% printenv KEY
 value
 
 ~ 14:41
-% unset KEY                                              <
+% unset KEY
 
 ~ 14:41
-% printenv KEY                                           <
+% printenv KEY
 
 ```
 
