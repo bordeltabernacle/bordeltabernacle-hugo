@@ -1,7 +1,7 @@
 <div id="comments">
     {{ if ne .Params.comments false}}
     {{ $doc := . }}
-    {{ with .Site.Params.disqus }}
+    {{ with .Site.Params.disqusShortname }}
     <div id="disqus_thread"></div>
     <script type="text/javascript">
       var disqus_shortname = '{{ . }}';
