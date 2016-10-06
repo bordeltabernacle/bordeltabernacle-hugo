@@ -23,13 +23,13 @@ install Virtualbox first, from [here](https://www.virtualbox.org/wiki/Downloads)
 We're going ot grab the Windows `.exe` file.  Double click on it, and follow
 the defaults through to the end.
 
-![vbox_download]({{ site.url }}/images/vbox_download.png)
+![vbox_download](/images/vbox_download.png)
 
 Now we can install Vagrant, from [here](https://www.vagrantup.com/downloads.html),
 grabbing the Windows `.msi` file, double clicking on it once it's downloaded and
 following the defaults.
 
-![vagrant_download]({{ site.url }}/images/vagrant_download.png)
+![vagrant_download](/images/vagrant_download.png)
 
 Vagrant is a command line tool, so you're gonna have to be comfortable on the
 command line, not too much, just enough to know what it is, how to access it
@@ -355,7 +355,7 @@ total 1
 -rwxrwxrwx 1 vagrant vagrant 26 Aug  3 10:17 hello.txt
 ~~~
 
-![hello_msg]({{ site.url }}/images/hello_msg.png)
+![hello_msg](/images/hello_msg.png)
 
 Good good, we can now start creating our Ansible files on our host machine, and
 easily run them in the Vagrant VM.  And when we need to share what we've done,
