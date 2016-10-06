@@ -39,7 +39,7 @@ then my laptop is connected by ethernet, with a static ip address on
 the same `192.168.0.0/24` network, so my Ansible VM will just get NAT'd through
 this address. Pretty basic, but enough for these purposes.
 
-![routers]({{ site.url }}/images/IMAG0131.jpg)
+![routers](/images/IMAG0131.jpg)
 
 So, in a directory created for this Ansible project, I've created a file
 called *hosts*, without a file extension. As far as I understand, this file can
