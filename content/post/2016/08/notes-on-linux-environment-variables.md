@@ -92,7 +92,9 @@ we follow `printenv` with the key we want.
 /home/rob
 ```
 
-And we can temporarily alter our environment with `env`:
+And we can temporarily alter our environment with `env`, placing it in front
+of the command we want to provide the environment variable for, in this case
+a simple `printenv`:
 
 ```bash
 ~ 13:35
