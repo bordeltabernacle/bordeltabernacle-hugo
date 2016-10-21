@@ -5,13 +5,12 @@ title: Now
 What I'm doing [now][ds]
 
 - Primarily programming in Python
-- Learning Go, Linux & Ansible
-- Understanding & fine-tuning my .vimrc
-- Educating my colleagues in Network Automation
-- Deepening my understanding of Linux & the TCP/IP stack
-- Testing out Cisco's APIC-EM
-- Reading TCP/IP illustrated and listening to Grimes
+- Learning C & Go
+- Introducing Ansible into production
+- Deepening my knowledge of Linux & the TCP/IP stack
+- Relenting in the battle against my Windows 7 work laptop and now using PyCharm
+- Reading about Vim and PGP and listening to [BASS](http://www.bassdrive.com/pop-up/)
 
-Last Updated: 12/09/2016
+Last Updated: 21/10/2016
 
 [ds]: https://sivers.org/now
