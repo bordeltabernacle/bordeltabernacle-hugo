@@ -1,0 +1,55 @@
+==================================================================
+https://keybase.io/robphoenix
+--------------------------------------------------------------------
+
+I hereby claim:
+
+  * I am an admin of https://bordeltabernacle.com
+  * I am robphoenix (https://keybase.io/robphoenix) on keybase.
+  * I have a public key ASB-aboRV_tyb6roe20y1_L98XiAAecN-rU421MRxMW7ywo
+
+To do so, I am signing this object:
+
+{
+    "body": {
+        "key": {
+            "eldest_kid": "010161c1ab8c024cc40851105449811c4905db87e2704d88a5ed27a71f681796cac70a",
+            "host": "keybase.io",
+            "kid": "01207e69ba1157fb726faae87b6d32d7f2fdf1788001e70dfab538db5311c4c5bbcb0a",
+            "uid": "226dd7462f98dcf3e12d49eb577c2219",
+            "username": "robphoenix"
+        },
+        "service": {
+            "hostname": "bordeltabernacle.com",
+            "protocol": "https:"
+        },
+        "type": "web_service_binding",
+        "version": 1
+    },
+    "client": {
+        "name": "keybase.io go client",
+        "version": "1.0.18"
+    },
+    "ctime": 1477671386,
+    "expire_in": 504576000,
+    "merkle_root": {
+        "ctime": 1477671283,
+        "hash": "02b0f401de92ae485688db2e462803761f76346193594a25631f8f019a4bffabaf69c4ded79a12a9e2716b16df2c0bf28445eb7ce1f60a28302b253b76989f41",
+        "seqno": 692005
+    },
+    "prev": "a8f5c28cbec46e20ed09a7b0a7ecee2c86f27b5b80d4d73c2334a431a1ca6b54",
+    "seqno": 10,
+    "tag": "signature"
+}
+
+which yields the signature:
+
+hKRib2R5hqhkZXRhY2hlZMOpaGFzaF90eXBlCqNrZXnEIwEgfmm6EVf7cm+q6HttMtfy/fF4gAHnDfq1ONtTEcTFu8sKp3BheWxvYWTFAv97ImJvZHkiOnsia2V5Ijp7ImVsZGVzdF9raWQiOiIwMTAxNjFjMWFiOGMwMjRjYzQwODUxMTA1NDQ5ODExYzQ5MDVkYjg3ZTI3MDRkODhhNWVkMjdhNzFmNjgxNzk2Y2FjNzBhIiwiaG9zdCI6ImtleWJhc2UuaW8iLCJraWQiOiIwMTIwN2U2OWJhMTE1N2ZiNzI2ZmFhZTg3YjZkMzJkN2YyZmRmMTc4ODAwMWU3MGRmYWI1MzhkYjUzMTFjNGM1YmJjYjBhIiwidWlkIjoiMjI2ZGQ3NDYyZjk4ZGNmM2UxMmQ0OWViNTc3YzIyMTkiLCJ1c2VybmFtZSI6InJvYnBob2VuaXgifSwic2VydmljZSI6eyJob3N0bmFtZSI6ImJvcmRlbHRhYmVybmFjbGUuY29tIiwicHJvdG9jb2wiOiJodHRwczoifSwidHlwZSI6IndlYl9zZXJ2aWNlX2JpbmRpbmciLCJ2ZXJzaW9uIjoxfSwiY2xpZW50Ijp7Im5hbWUiOiJrZXliYXNlLmlvIGdvIGNsaWVudCIsInZlcnNpb24iOiIxLjAuMTgifSwiY3RpbWUiOjE0Nzc2NzEzODYsImV4cGlyZV9pbiI6NTA0NTc2MDAwLCJtZXJrbGVfcm9vdCI6eyJjdGltZSI6MTQ3NzY3MTI4MywiaGFzaCI6IjAyYjBmNDAxZGU5MmFlNDg1Njg4ZGIyZTQ2MjgwMzc2MWY3NjM0NjE5MzU5NGEyNTYzMWY4ZjAxOWE0YmZmYWJhZjY5YzRkZWQ3OWExMmE5ZTI3MTZiMTZkZjJjMGJmMjg0NDVlYjdjZTFmNjBhMjgzMDJiMjUzYjc2OTg5ZjQxIiwic2Vxbm8iOjY5MjAwNX0sInByZXYiOiJhOGY1YzI4Y2JlYzQ2ZTIwZWQwOWE3YjBhN2VjZWUyYzg2ZjI3YjViODBkNGQ3M2MyMzM0YTQzMWExY2E2YjU0Iiwic2Vxbm8iOjEwLCJ0YWciOiJzaWduYXR1cmUifaNzaWfEQE8mDPeyRE6pTweK7VKjiZs9phgUigfLOaL0xb43uOpGnZSxeQfSHRoHiuhJ6/wpFf7PE8spJcHTv/mK3vmNBQuoc2lnX3R5cGUgpGhhc2iCpHR5cGUIpXZhbHVlxCAjmsSx2A9WeY0ur+2KcVlAsainT+PdW+ulL382pgIMGqN0YWfNAgKndmVyc2lvbgE=
+
+And finally, I am proving ownership of this host by posting or
+appending to this document.
+
+View my publicly-auditable identity here: https://keybase.io/robphoenix
+
+==================================================================
+
