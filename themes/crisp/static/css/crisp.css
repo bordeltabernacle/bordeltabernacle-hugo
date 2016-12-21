@@ -214,11 +214,15 @@ h1.post-title {
 }
 h3.post-title {
 	font-family: "Nunito Sans", sans-serif;
-	margin-top:0.4em;
-	padding-bottom:0.9em;
-	border-bottom: 1px solid #eee;
+    margin-top:0.4em;
+    /* padding-bottom:0.9em; */
+	/* border-bottom: 1px solid #eee; */
 	font-size: 1.1em;
 	color: #444;
+}
+time {
+    /* color: #bbb; */
+	font-size: 0.7em;
 }
 .post-title .feature-star {
 	font-size: 0.9em;
@@ -227,8 +231,8 @@ h3.post-title {
 	color: #ccc;
 }
 .taglist a {
-	background-color:#ccc;
-	color:#fff;
+	/* background-color:#ccc; */
+	color: #ccc;
 	display: inline-block;
 	line-height: 1.5em;
 	padding:0.3em 0.6em 0.3em 0.6em;
