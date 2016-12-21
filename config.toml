@@ -3,6 +3,7 @@ languageCode = "en-gb"
 title = "Rob Phoenix"
 newContentEditor = "nvim"
 theme = "crisp"
+Paginate = 10
 
 [Params]
 

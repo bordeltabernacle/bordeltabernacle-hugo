@@ -65,7 +65,7 @@ p {
 }
 /* Headings */
 h1, h2, h3, h4, h5, h6 {
-	font-family: "Puritan", sans-serif;
+	font-family: "Nunito Sans", sans-serif;
 	font-weight: 400 !important;
 }
 h1 {
@@ -157,7 +157,7 @@ input {
 }
 /* Sidebar */
 header h1 {
-	font-family: "Puritan", sans-serif;
+	font-family: "Nunito Sans", sans-serif;
 	font-size:2.3em;
 	margin-top: 0.1em;
 	margin-bottom: 45px;
@@ -207,13 +207,13 @@ article span.post-stamp {
 	color:#888;
 }
 h1.post-title {
-	font-family: "Puritan", sans-serif;
+	font-family: "Nunito Sans", sans-serif;
 	color: #ab4642;
 	margin-top:0.35em;
 	margin-bottom: 0.6em;
 }
 h3.post-title {
-	font-family: "Puritan", sans-serif;
+	font-family: "Nunito Sans", sans-serif;
 	margin-top:0.4em;
 	padding-bottom:0.9em;
 	border-bottom: 1px solid #eee;
