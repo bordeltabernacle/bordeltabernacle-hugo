@@ -10,6 +10,11 @@
         <meta property="og:site_name" content="{{ .Site.Title }}" />
         <meta property="og:url" content="{{ .Permalink }}" />
 
+        <!-- Google Fonts -->
+        <link href="https://fonts.googleapis.com/css?family=Monoton|Nunito+Sans|Open+Sans" rel="stylesheet">
+        <!-- Font Awesome -->
+        <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
+
     {{ if .IsPage }}
         <meta property="og:type" content="article" />
         <meta property="og:article:published_time" content="{{ .Date.Format "2006-01-02T15:04:05Z07:00" | safeHTML }}" />
