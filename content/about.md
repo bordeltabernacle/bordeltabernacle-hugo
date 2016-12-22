@@ -2,9 +2,11 @@
 title: "About"
 ---
 
-* **bordel:** chaos
+* **bordel:**     chaos
 * **tabernacle:** hut
 
-I'm Rob Phoenix, a self-taught programmer who used to live in a caravan.
+Hi, I'm Rob Phoenix, I work on network automation type things, with Golang, Python,
+Linux and Ansible. I'm a self-taught programmer, with a masters in computer
+networking and a bachelors in fine art.
 
-PGP key: [ED1AB5E7](https://pgp.mit.edu/pks/lookup?op=get&search=0x4E270D9DED1AB5E7)
+rob [at] robphoenix [dot] com / [pgp](https://keybase.io/robphoenix/pgp_keys.asc)
