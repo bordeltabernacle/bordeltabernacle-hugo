@@ -54,7 +54,7 @@ article a:hover {
 	color: #42213d;
 }
 article h2 {
-	color: #ab4642;
+	color: #198844;
 }
 p, hr, h4, h5, h6 {
 	margin-top: 0.9em;
@@ -105,16 +105,18 @@ a {
 	color: #42213d;
 }
 a:hover {
-	color: #ab4642;
+	color: #ff2ecc;
 }
 h1 a, h2 a, h4 a, h5 a, h6 a {
 	font-weight:400 !important;
 }
 h3 a:hover {
 	color: #198844;
+    border-bottom: 2px solid #198844;
 }
 h6 a:hover {
-	color: #fb1922;
+	color: #a51080;
+    border-bottom: 2px solid #a51080;
 }
 strong {
 	font-weight: 700;
@@ -163,7 +165,7 @@ header h1 {
 	margin-bottom: 45px;
 }
 header h1 a {
-	font-family: "Monoton", cursive;
+	font-family: "Bitter", cursive;
 	color: #42213d;
 }
 header h1 a:hover {
@@ -208,7 +210,7 @@ article span.post-stamp {
 }
 h1.post-title {
 	font-family: "Nunito Sans", sans-serif;
-	color: #ab4642;
+	color: #198844;
 	margin-top:0.35em;
 	margin-bottom: 0.6em;
 }
