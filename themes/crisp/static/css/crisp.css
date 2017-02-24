@@ -165,7 +165,7 @@ header h1 {
 	margin-bottom: 45px;
 }
 header h1 a {
-	font-family: "Bitter", cursive;
+	font-family: "Bitter", sans-serif;
 	color: #42213d;
 }
 header h1 a:hover {
