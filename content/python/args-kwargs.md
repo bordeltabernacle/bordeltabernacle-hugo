@@ -4,7 +4,9 @@ date: 2015-08-26
 tags: [ "python" ]
 ---
 
-Python's `*args` & `**kwargs` have always intimidated me for some reason.  Since I've been working with Django they've turned up more frequently, for instance, when overriding a model's `save` function:
+Python's `*args` & `**kwargs` have always intimidated me for some reason.  Since
+I've been working with Django they've turned up more frequently, for instance,
+when overriding a model's `save` function:
 
 ```python
 class myModel(models.Model):
@@ -20,7 +22,11 @@ class myModel(models.Model):
 
 And so I thought I'd get to the bottom of what they are.
 
-Basically, they allow a function to accept an indeterminate, variable number of arguments or keyword arguments.  The `args` and `kwargs` bits are actually not important, it's the `*` & `**` that are, similar I guess to their use elsewhere as a wildcard symbol.  So you can just use the asterisks on their own or even `*thing` & `**things`, but don't do that, you'll upset people.
+Basically, they allow a function to accept an indeterminate, variable number of
+arguments or keyword arguments.  The `args` and `kwargs` bits are actually not
+important, it's the `*` & `**` that are, similar I guess to their use elsewhere
+as a wildcard symbol.  So you can just use the asterisks on their own or even
+`*thing` & `**things`, but don't do that, you'll upset people.
 
 For instance:
 
@@ -40,7 +46,8 @@ Skip James
 Memphis Minnie
 ```
 
-We can also include a formal parameter alongside our `*args`.  A formal parameter just means it is mandatory, that an argument must be passed to it.
+We can also include a formal parameter alongside our `*args`.  A formal
+parameter just means it is mandatory, that an argument must be passed to it.
 
 ```python
 >>> def print_singers(genre, *args):
@@ -56,7 +63,8 @@ Skip James
 Memphis Minnie
 ```
 
-This formal parameter is positional, so we have to make sure we pass our arguments to the function in order:
+This formal parameter is positional, so we have to make sure we pass our
+arguments to the function in order:
 
 ```python
 >>> print_singers('R.L. Burnside', 'Blues', 'Bessie Smith', 'Skip James', 'Memphis Minnie')
@@ -115,7 +123,8 @@ popular_songs = Me and My Chauffeur, Evil Devil Woman Blues
 >>>
 ```
 
-As well as being used in defining functions `*args` & `**kwargs` can also be used when calling functions:
+As well as being used in defining functions `*args` & `**kwargs` can also be
+used when calling functions:
 
 ```python
 >>> def blues_singer(name, born, died):
@@ -147,8 +156,10 @@ Memphis Minnie was born on 3rd June 1897 and died on 6th August 1973
 >>>
 ```
 
-Using `*args` when calling our function unpacks the values in the `args` variable and passes them as positional arguments to the function.
-And if we try and ask it to unpack and pass a different number of values than is asked for by the function?
+Using `*args` when calling our function unpacks the values in the `args`
+variable and passes them as positional arguments to the function.  And if we try
+and ask it to unpack and pass a different number of values than is asked for by
+the function?
 
 ```python
 >>> args = ('Bessie Smith', '15th April 1894')
@@ -167,7 +178,8 @@ TypeError: blues_singer() takes exactly 3 arguments (4 given)
 ```
 
 Just the same as if `*args` wasn't being used.
-As before, using `**kwargs` is the same, except we pass a dictionary to the function:
+As before, using `**kwargs` is the same, except we pass a dictionary to the
+function:
 
 ```python
 >>> def blues_singer(name, born, died):
