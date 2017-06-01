@@ -1,9 +1,8 @@
 +++
 topics = ["Go","golang","programming"]
-tags = ["golang"]
+tags = ["go", "golang"]
 date = "2017-06-01T09:29:32+01:00"
 title = "Using Unescaped Paths in Go"
-draft = true
 
 +++
 
@@ -69,8 +68,8 @@ equivalent](http://www.december.com/html/spec/esccodes.html). We don't want this
 escaped as it indicates the [query component of the
 URL](https://www.ietf.org/rfc/rfc3986.txt):
 
-*The query component is indicated by the first question mark ("?") character and
-terminated by a number sign ("#") character or by the end of the URI.*
+> The query component is indicated by the first question mark ("?") character and
+> terminated by a number sign ("#") character or by the end of the URI.
 
 This is why I was getting a 400 Bad Request, the server didn't understand the
 escaped URL. So we need to use the raw unescaped path in order to successfully
