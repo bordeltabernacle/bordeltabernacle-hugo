@@ -339,8 +339,8 @@ func main() {
 // ***A|******B|***C|***D|*********E|*******F|***G|
 // **my|**voice|**is|**my|**passport|**verify|**me|
 //
-// A	    |B		|C	    |D	    |E  		    |F	    |G  	|
-// my	    |voice	|is	    |my	    |passport	    |verify	|me 	|
+// A	    |B		|C	    |D	    |E              |F      |G      |
+// my	    |voice	|is	    |my	    |passport       |verify |me     |
 ```
 
 Note that the `AlignRight` flag doesn't appear to make a difference in a
