@@ -4,12 +4,12 @@
 }
 /* Basic Typography */
 html, body {
-	font-size: 1em;
+	font-size: 0.8em;
 	line-height: 1.65em;
 	font-family: "Open Sans", sans-serif;
     font-weight: 300;
     letter-spacing: 0.5px;
-	color:#000000;
+	color: #000000;
 }
 html {
 	height: 100%;
@@ -61,7 +61,7 @@ p, hr, h4, h5, h6 {
 	margin-bottom: 0.9em;
 }
 p {
-    font-size: 1.1em;
+    font-size: 1.0em;
 }
 /* Headings */
 h1, h2, h3, h4, h5, h6 {
@@ -69,7 +69,7 @@ h1, h2, h3, h4, h5, h6 {
 	font-weight: 400 !important;
 }
 h1 {
-	font-size: 2.5em;
+	font-size: 2.3em;
 	line-height: 1.1em;
 	margin-top: 0.6em;
 	margin-bottom: 0.6em;
@@ -124,7 +124,7 @@ strong {
 blockquote {
 	border-left: 0.4em solid #eee;
 	padding-left: 1.2em;
-	font-size: 1.3em;
+	font-size: 0.9em;
 }
 hr{
  	border: 0;
@@ -146,12 +146,12 @@ pre {
 	background: #eee;
     border-radius: 0.25em;
 	padding: 0.5em;
-	word-break: break-all;
-	word-wrap: break-word;
-	white-space: pre;
-	white-space: -moz-pre-wrap;
-	white-space: pre-wrap;
-	white-space: pre\9;
+	/* word-break: break-all; */
+	/* word-wrap: break-word; */
+    /* white-space: pre; */
+    /* white-space: -moz-pre-wrap; */
+    /* white-space: pre-wrap; */
+    /* white-space: pre\9; */
 }
 input {
 	font-size:1em;
