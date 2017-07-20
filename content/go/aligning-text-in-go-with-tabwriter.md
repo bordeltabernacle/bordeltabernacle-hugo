@@ -283,7 +283,7 @@ discarding empty columns, overriding `padchar` to always indent columns with
 tabs and a handy `Debug` flag that sticks in a vertical bar, `|`, to distinguish
 where your columns are.
 
-Let's have a [play](https://play.golang.org/p/YNNWwFG7D7) with this then.
+Let's have a [play](https://play.golang.org/p/0R47HZD56T) with this then.
 
 ```go
 func main() {
