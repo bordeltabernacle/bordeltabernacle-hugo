@@ -287,45 +287,45 @@ Let's have a [play](https://play.golang.org/p/YNNWwFG7D7) with this then.
 
 ```go
 func main() {
-	// create a new tabwriter
-	w := new(tabwriter.Writer)
-	// we can initialise the tabwriter with
+    // create a new tabwriter
+    w := new(tabwriter.Writer)
+    // we can initialise the tabwriter with
     // our preferred settings independently
-	// of it's creation
-	//
-	// here we're outputting to stdout, with
+    // of it's creation
+    //
+    // here we're outputting to stdout, with
     // right-aligned, space-separated columns,
     // with no padding, and we're going to add
     // the debug flag for a clearer visual output.
-	w.Init(os.Stdout, 0, 0, 0, ' ', tabwriter.Debug|tabwriter.AlignRight)
-	fmt.Fprintln(w, "A\tB\tC\tD\tE\tF\tG\t")
-	fmt.Fprintln(w, "my\tvoice\tis\tmy\tpassport\tverify\tme\t")
-	fmt.Fprintln(w)
-	w.Flush()
+    w.Init(os.Stdout, 0, 0, 0, ' ', tabwriter.Debug|tabwriter.AlignRight)
+    fmt.Fprintln(w, "A\tB\tC\tD\tE\tF\tG\t")
+    fmt.Fprintln(w, "my\tvoice\tis\tmy\tpassport\tverify\tme\t")
+    fmt.Fprintln(w)
+    w.Flush()
 
-	// we can re-initialise the tabwriter with
+    // we can re-initialise the tabwriter with
     // different settings if we like, let's just
     // add some padding so things aren't so cramped
-	w.Init(os.Stdout, 0, 0, 2, ' ', tabwriter.Debug|tabwriter.AlignRight)
-	fmt.Fprintln(w, "A\tB\tC\tD\tE\tF\tG\t")
-	fmt.Fprintln(w, "my\tvoice\tis\tmy\tpassport\tverify\tme\t")
-	fmt.Fprintln(w)
-	w.Flush()
+    w.Init(os.Stdout, 0, 0, 2, ' ', tabwriter.Debug|tabwriter.AlignRight)
+    fmt.Fprintln(w, "A\tB\tC\tD\tE\tF\tG\t")
+    fmt.Fprintln(w, "my\tvoice\tis\tmy\tpassport\tverify\tme\t")
+    fmt.Fprintln(w)
+    w.Flush()
 
-	// And for some real fun let's pad with a symbol
-	w.Init(os.Stdout, 0, 0, 2, '*', tabwriter.Debug|tabwriter.AlignRight)
-	fmt.Fprintln(w, "A\tB\tC\tD\tE\tF\tG\t")
-	fmt.Fprintln(w, "my\tvoice\tis\tmy\tpassport\tverify\tme\t")
-	fmt.Fprintln(w)
-	w.Flush()
+    // And for some real fun let's pad with a symbol
+    w.Init(os.Stdout, 0, 0, 2, '*', tabwriter.Debug|tabwriter.AlignRight)
+    fmt.Fprintln(w, "A\tB\tC\tD\tE\tF\tG\t")
+    fmt.Fprintln(w, "my\tvoice\tis\tmy\tpassport\tverify\tme\t")
+    fmt.Fprintln(w)
+    w.Flush()
 
     // And finally let's have a tab-separated column,
     // with a tab-stop of 8
-	w.Init(os.Stdout, 0, 8, 2, '\t', tabwriter.Debug|tabwriter.AlignRight)
-	fmt.Fprintln(w, "A\tB\tC\tD\tE\tF\tG\t")
-	fmt.Fprintln(w, "my\tvoice\tis\tmy\tpassport\tverify\tme\t")
-	fmt.Fprintln(w)
-	w.Flush()
+    w.Init(os.Stdout, 0, 8, 2, '\t', tabwriter.Debug|tabwriter.AlignRight)
+    fmt.Fprintln(w, "A\tB\tC\tD\tE\tF\tG\t")
+    fmt.Fprintln(w, "my\tvoice\tis\tmy\tpassport\tverify\tme\t")
+    fmt.Fprintln(w)
+    w.Flush()
 }
 
 // Output
