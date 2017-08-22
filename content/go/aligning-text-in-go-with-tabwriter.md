@@ -28,8 +28,8 @@ but obvious, names like `Wireless Network Connection`, rather than something
 short and less obvious like `wlp1s0`, the wireless interface on my Ubuntu
 laptop. So I had to consider this variance in length, and did so by just
 counting the longest interface names I encountered and setting the width to
-that, which didn't take into interfaces I hadn't or wouldn't encounter. I know,
-I know, this is awful design/code, and did lead to
+that, which didn't take into account interfaces I hadn't, or wouldn't, encounter.
+I know, I know, this is awful design/code, and did lead to
 [issues](https://github.com/robphoenix/trawl/commit/99d61aceb9db64098db3e6ce254dcce0257bcfcb).
 Anyway, it looked something like this;
 
@@ -245,8 +245,8 @@ w.Flush()
 ```
 
 How nice is that, `tabwriter` I mean, heaven knows how amateurish my code is!
-Needless to say it's huge improvement on my original. I'm not sure if there's a
-performance hit, when there's just a few interfaces there's no noticeable
+Needless to say it's a huge improvement on my original. I'm not sure if there's
+a performance hit, when there's just a few interfaces there's no noticeable
 difference in loading them all into the writer before flushing them out rather
 than printing them as they are created. Maybe if someone was using it with a
 substantial amount of interfaces then it might make a difference, but then if
